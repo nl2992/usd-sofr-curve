@@ -31,6 +31,19 @@ is expected.
    (`openusdcurve` engine, `configs/sofr_market.yaml`); compare `P(0,T)`, zero and forward rates
    against the S490 tab.
 
+## Ticker verification (checked July 2026)
+
+| Ticker | Meaning | Verified against |
+| --- | --- | --- |
+| `SOFRRATE Index` | Published overnight SOFR fixing (NY Fed) | Bloomberg overnight cash indices |
+| `USOSFRA`=1M, `B`=2M, `C`=3M … `USOSFR1`=1Y, `2`=2Y … `50`=50Y | USD fixed-vs-SOFR OIS strip | Clarus rates ticker database |
+| `SFR` / `SER` roots → `SFRA` / `SERA` (active contract) | 3M (SR3) / 1M (SR1) SOFR futures | CME Group Bloomberg codes reference |
+| `YCSW0490 Index` (curve **S490**) | Bloomberg's market USD SOFR swap curve | Bloomberg USD Bellwether Swap Indices |
+
+Spot-check on the terminal (not publicly documentable): the weekly short-end codes
+`USOSFR1Z/2Z/3Z` and the `USOSFR1F` (18M) code — these are the standard Bloomberg USOSFR
+generic-tenor forms, but confirm they resolve under your entitlement.
+
 ## Notes / caveats
 
 - **Price source consistency:** the `PX_SRC` parameter (default `BGN`) is applied across every
