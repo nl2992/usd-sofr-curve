@@ -15,6 +15,7 @@ is expected.
 | **SOFR_Futures** | SR3 (`SFRA Comdty`, 3M ×20) and SR1 (`SERA Comdty`, 1M ×13) chains via `BDS(...,"FUT_CHAIN")` that spill contract tickers down column A; per-contract fields + implied rate `= 100 − PX_LAST`. |
 | **SOFR_OIS_Quotes** | Full `USOSFR…` OIS strip 1W–50Y: bid/ask/last + mid `=(bid+ask)/2` (falls back to last); recommended bootstrap set flagged. |
 | **Bootstrap** | Live single-curve OIS bootstrap from the OIS mids → discount factors, zero & forward rates, plus a Δz-vs-S490 column. |
+| **Swap_Pricer** | Dynamic SWPM-style Fixed-vs-SOFR OIS valuation off the Bootstrap curve: NPV, par coupon, DV01/PV01, cashflow schedule. |
 | **Bloomberg_S490_Validation** | Bloomberg's own USD SOFR curve (`YCSW0490 Index`) — benchmark, not an input. |
 | **Conventions** | DES/FLDS convention grid for representative OIS (`USOSFRC/1/5/30`) + SWPM cashflow-export guidance. |
 
@@ -59,12 +60,27 @@ recursion runs top-to-bottom (each row references the rows above it). Outputs: *
 each pillar interval. Paste Bloomberg S490 zero rates into the yellow column J to get **Δz in bp**
 — the same dealer-curve validation the Lehman paper performs.
 
-**Accuracy:** exact for the sub-1Y money-market points and the annual 1Y–10Y section (pillars
-coincide with coupon dates); the sparse long end (12–50Y) uses the pillar grid *as* the coupon
-schedule — a standard, transparent approximation that is good to ~20Y and increasingly coarse at
-25Y+. Validated numerically: all discount factors positive and strictly monotone, zero rates
-tracking the par-strip shape. For the exact interpolated-annuity build across every year, use the
-`openusdcurve` Python engine (`configs/sofr_market.yaml`).
+**Payment convention (fixed):** OIS ≤ 1Y pay a **single** coupon at maturity, so those points use
+`DF = 1/(1 + S·τ0)`; OIS ≥ 18M pay **annual** coupons, so `DF = (1 − S·A_prior)/(1 + S·τ_coupon)`
+where `A_prior` accumulates `τ·DF` **only at annual coupon dates** (column I books zero on the
+sub-annual and 18M rows, so 2Y's annuity correctly sees 1Y — not 18M or the monthly points). This
+was the fix for an earlier version that treated every pillar as a coupon date and mis-priced the
+front ~7bp. **Every input now reprices to par to ~0 bp** (validated numerically 1W–50Y); the
+sparse long end (12–50Y) still uses the pillar grid as its coupon schedule. For the fully exact
+interpolated-annuity build, use the `openusdcurve` Python engine (`configs/sofr_market.yaml`).
+
+## The Swap_Pricer tab
+
+A dynamic SWPM replica: value any Fixed-vs-SOFR OIS off the bootstrapped curve. Inputs (yellow):
+direction, notional, effective date, tenor, coupon (defaults to par → NPV ≈ 0). It interpolates
+discount factors **log-linearly** off the Bootstrap curve, builds the annual fixed-leg cashflow
+schedule, and reports **NPV, par coupon, DV01/PV01**, and both leg NPVs — SWPM-style. The float
+leg uses the single-curve telescoping identity `PV = N·(DF_eff − DF_mat)`.
+
+Cross-checked against the SWPM screen for a 10mm 1Y swap: **par coupon ≈ 4.02%, net NPV = 0,
+PV01 ≈ 974** (SWPM 973.78). SWPM's leg NPVs read ~9.995mm rather than 10mm because it discounts
+from the curve date to a valuation date 2 business days after effective; here effective = spot so
+`DF(effective) = 1` exactly. Net NPV, par coupon and DV01 are unaffected.
 
 ## Field-mnemonic notes (verified live on terminal)
 
