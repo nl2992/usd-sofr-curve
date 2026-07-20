@@ -18,6 +18,23 @@ is expected.
 | **Swap_Pricer** | Dynamic SWPM-style Fixed-vs-SOFR OIS valuation off the Bootstrap curve: NPV, par coupon, DV01/PV01, cashflow schedule. |
 | **Bloomberg_S490_Validation** | Bloomberg's own USD SOFR curve (`YCSW0490 Index`) — benchmark, not an input. |
 | **Conventions** | DES/FLDS convention grid for representative OIS (`USOSFRC/1/5/30`) + SWPM cashflow-export guidance. |
+| **Fwd_Interp** | Zhou 2002 forward-curve interpolation: V1 piecewise-flat vs V2 piecewise-quadratic instantaneous forwards, both repricing the pillar DFs exactly. |
+
+## The Fwd_Interp tab (Zhou 2002 forward interpolation)
+
+Implements the paper's two forward-curve variants, both of which reprice the bootstrapped pillar
+DFs **identically** (they share each segment's integral `∫f = −ln(DF_i/DF_(i-1))`):
+
+- **Variant 1 — piecewise-flat instantaneous forward** (Lehman's default): the forward is constant
+  over each segment, `f_i = ∫f / Δ`. A step curve — simplest, most stable, exact repricing.
+- **Variant 2 — piecewise-quadratic instantaneous forward** `f(x)=a+bx+cx²`, continuous across
+  pillars (adjacent segments share the "node forward") while still repricing exactly. The
+  coefficients are **closed-form** from `(f_left, f_right, ∫f)` — no per-segment solver — because
+  the bootstrap already fixes each segment's integral. Node forward = average of the two adjacent
+  flat forwards. The `reprice check` column (∫quad − ∫f ≈ 0) confirms V2 preserves every DF.
+
+The difference is intra-segment (compare **Flat fwd** vs **V2 fwd @ mid**), largest across the wide
+long-end gaps (10Y→15Y→20Y→30Y) — exactly where V2's smoothing matters and V1's steps look coarse.
 
 ## How to use
 
