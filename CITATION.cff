@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "openusdcurve: reproducible USD curves from public data"
+authors:
+  - family-names: "nl2992"
+    email: "nl2992@columbia.edu"
+version: 0.1.0
+date-released: 2026-07-20
+license: MIT
