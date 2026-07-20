@@ -20,7 +20,7 @@ is expected.
 | **CDS_Quotes** | Single-name CDS par spreads: `BDP(ticker,"PX_LAST")` with a manual demo fallback so it runs immediately. One entity / seniority / clause. |
 | **CDS_Schedule** | Quarterly premium & default schedule to 10Y. DF from the SOFR `Curve_Interface`, survival `Q(t)=Q_prev·exp(-λ·dt)` from the hazard curve, plus premium/accrual/protection PV factors per period. |
 | **Hazard_Bootstrap** | Piecewise-constant hazard curve. Each λ defaults to the **forward-hazard approximation** (reprices within a few bp) and is **Goal-Seekable** (set the repricing-error cell to 0 by changing λ, top-down) for an exact fit. |
-| **CDS_Pricer** | Prices any CDS off both curves: RPV01, protection & premium legs, par spread, PV, upfront, CS01. |
+| **CDS_Pricer** | Prices any CDS off both curves: RPV01, protection & premium legs, par spread, PV, upfront, and the full first-order risk suite — **CS01, IR01/DV01, Rec01, jump-to-default**. |
 | **CDS_Validation** | `Q(0)=1`, survival monotone, λ≥0, repricing error → 0, and the flat-curve check `s ≈ (1−R)·λ`. |
 
 ## The CDS module (credit curve on top of SOFR)
