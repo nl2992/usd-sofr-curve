@@ -1,0 +1,46 @@
+# USD-SOFR-FUTURES-PUBLIC (PLAN §1 Track C / Variant C1, §13)
+#
+# Public-data front-end SOFR curve: SOFR fixing/deposit + 1M/3M SOFR futures only. Strong front
+# end; deliberately NOT extrapolated to 30Y (PLAN §3: "do not extrapolate to 30Y").
+#
+# Schema (see openusdcurve/config.py for the full pydantic model):
+#   curve_id             free-text identifier
+#   description          human-readable summary
+#   classification.functional                  bool — can it bootstrap/reprice/recover? (PLAN §2)
+#   classification.market_representativeness   High | Medium | Low (PLAN §0)
+#   classification.notes                       free text caveat
+#   source.type          synthetic | csv | new_york_fed | fred | treasury | cme_public | sofr_proxy
+#   source.params        kwargs passed to that DataSource's constructor
+#   instruments.include_types   optional filter on InstrumentType values
+#   interpolation        log_linear_discount | linear | flat_forward
+#   day_count            documentary (instruments own their own conventions)
+
+curve_id: USD-SOFR-FUTURES-PUBLIC
+description: >
+  Public-data front-end SOFR curve built from a manually-supplied deposit + CME SOFR future
+  settlement quote. Ships against the bundled example CSV (data/sample/example_quotes.csv) for
+  a fully offline, reproducible demo; point source.params.path at a real daily download to use
+  it live. Swap CSVSource for CMEPublicDelayedSource.from_csv + NewYorkFedSOFRSource to combine a
+  live NY Fed fixing with a live CME settlement file (PLAN §3 Variant C1).
+
+classification:
+  functional: true
+  market_representativeness: Medium
+  notes: >
+    Front end only (deposit + futures strip). Do not extrapolate this curve past its last
+    futures pillar for valuation purposes.
+
+source:
+  type: csv
+  params:
+    path: data/sample/example_quotes.csv
+    name: sofr-futures-public-csv
+
+instruments:
+  include_types:
+    - deposit
+    - future
+  notes: "SOFR-equivalent deposit + 1M/3M SOFR futures strip only (no swaps/OIS)."
+
+interpolation: log_linear_discount
+day_count: act365f

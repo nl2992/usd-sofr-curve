@@ -1,0 +1,10 @@
+valuation_date,instrument_type,instrument_id,maturity_date,quote,quote_type,start_date,bid,ask,source_url,delayed,provisional,observed_at
+2002-08-26,deposit,DEPO_ON,2002-08-27,0.0175,rate,2002-08-26,,,,false,false,
+2002-08-26,deposit,DEPO_1M,2002-09-26,0.0178,rate,2002-08-26,,,,false,false,
+2002-08-26,deposit,DEPO_3M,2002-11-26,0.0180,rate,2002-08-26,,,,false,false,
+2002-08-26,deposit,DEPO_6M,2003-02-26,0.0185,rate,2002-08-26,,,,false,false,
+2002-08-26,deposit,DEPO_12M,2003-08-26,0.0200,rate,2002-08-26,,,,false,false,
+2002-08-26,libor_swap,SWAP_2Y,2004-08-26,0.0250,par_rate,2002-08-26,,,,false,false,
+2002-08-26,libor_swap,SWAP_5Y,2007-08-26,0.0400,par_rate,2002-08-26,,,,false,false,
+2002-08-26,libor_swap,SWAP_10Y,2012-08-26,0.0520,par_rate,2002-08-26,,,,false,false,
+2002-08-26,libor_swap,SWAP_30Y,2032-08-26,0.0580,par_rate,2002-08-26,,,,false,false,

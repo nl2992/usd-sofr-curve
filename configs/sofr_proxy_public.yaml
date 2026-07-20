@@ -1,0 +1,49 @@
+# USD-SOFR-PROXY-PUBLIC (PLAN §1 / §3 Variant C3, §13)
+#
+# Public SOFR futures front end + an EXPLICITLY MODELLED long end: K_proxy(T) = Y_Treasury(T) +
+# S_estimated(T), a constant spread added to the Treasury par yield at each tenor. This is a
+# proxy, not a real OIS market curve — labelled Low market-representativeness and NOT suitable
+# for valuation, P&L, risk limits, or execution (PLAN §3, README).
+#
+# See openusdcurve/config.py for the full schema. source.type "sofr_proxy" is a composite:
+# it is not a single DataSource, it assembles futures_source + treasury_source internally.
+
+curve_id: USD-SOFR-PROXY-PUBLIC
+description: >
+  Public SOFR futures/deposit front end (same bundled CSV as USD-SOFR-FUTURES-PUBLIC) plus a
+  modelled long end built from the bundled Treasury par yield rows in the same file, each
+  shifted by a flat spread and re-tagged as OIS pillars ("PROXY_*"). Swap either sub-source's
+  type/params to use live CME/NY-Fed futures and a live openusdcurve.data.treasury.TreasurySource
+  pull.
+
+classification:
+  functional: true
+  market_representativeness: Low
+  notes: >
+    PROXY LONG END: everything past the futures strip is Y_Treasury(T) + a flat estimated
+    spread, not an observed OIS quote. Not for valuation, P&L, risk limits, or execution
+    (PLAN §3). Front-end (deposit + futures) quality matches USD-SOFR-FUTURES-PUBLIC.
+
+source:
+  type: sofr_proxy
+  params:
+    spread_bp: 20.0
+    futures_source:
+      type: csv
+      params:
+        path: data/sample/example_quotes.csv
+        name: sofr-proxy-futures-csv
+    treasury_source:
+      type: csv
+      params:
+        path: data/sample/example_quotes.csv
+        name: sofr-proxy-treasury-csv
+
+instruments:
+  include_types: []
+  notes: >
+    Deposit + futures from futures_source; Treasury-par rows from treasury_source are
+    re-tagged OIS ("PROXY_UST_*") pillars for the long end.
+
+interpolation: log_linear_discount
+day_count: act365f

@@ -1,0 +1,46 @@
+# USD-SOFR-OIS-MARKET (PLAN §1 Track B, §13)
+#
+# Full modern production-style SOFR curve: SOFR fixing/deposit + SOFR futures + LICENSED SOFR OIS
+# quotes (interdealer broker or vendor screen levels). Highest market-representativeness of the
+# four named curves, but its inputs are NOT public data and are NEVER committed to this
+# repository (PLAN §3, §8: "Do not commit restricted market data").
+#
+# To use this config you must supply your own licensed OIS quote file (CSV matching the schema
+# documented in openusdcurve/data/csv_source.py) at a path OUTSIDE version control, e.g.
+# data/licensed/sofr_ois_market.csv (add that directory to .gitignore). Without such a file this
+# config's `build`/`validate` will fail cleanly (FileNotFoundError) rather than silently
+# fabricating market levels — that failure is the expected, correct behavior for this curve when
+# no licensed data is present.
+#
+# See openusdcurve/config.py for the full schema.
+
+curve_id: USD-SOFR-OIS-MARKET
+description: >
+  Full modern SOFR curve (SOFR deposit/fixing + SOFR futures + licensed SOFR OIS quotes).
+  Production-analogue curve; requires a locally-supplied licensed quote file that this project
+  does not and will not ship (PLAN §3 vendor/licensed row: "never committed").
+
+classification:
+  functional: true
+  market_representativeness: High
+  notes: >
+    Requires licensed OIS data supplied locally (NOT committed to this repository). Highest
+    market-representativeness of the four named curves when that data is present; otherwise
+    this config cannot be built.
+
+source:
+  type: csv
+  params:
+    path: data/licensed/sofr_ois_market.csv
+    name: sofr-ois-market-licensed
+    license: licensed
+
+instruments:
+  include_types:
+    - deposit
+    - future
+    - ois
+  notes: "SOFR deposit/fixing + SOFR futures strip + full SOFR OIS par grid (1Y-30Y typical)."
+
+interpolation: log_linear_discount
+day_count: act365f

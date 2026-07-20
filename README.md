@@ -34,12 +34,19 @@ pip install -e ".[dev,plot]"
 ## CLI
 
 ```bash
-openusdcurve data pull   --source new-york-fed --date 2026-07-20
+openusdcurve data pull   --source new-york-fed --date 2026-07-20 [--offline]
 openusdcurve build       --config configs/sofr_futures_public.yaml --date 2026-07-20
 openusdcurve build       --config configs/lehman_public_2002.yaml  --date 2002-08-26
-openusdcurve validate    --curve USD_SOFR_PUBLIC --date 2026-07-20
-openusdcurve compare     --curve USD_SOFR_PUBLIC --benchmark bloomberg_curve.csv
+openusdcurve validate    --curve USD-SOFR-FUTURES-PUBLIC --date 2026-07-20
+openusdcurve compare     --curve USD-SOFR-FUTURES-PUBLIC --benchmark bloomberg_curve.csv
 ```
+
+`--curve` matches a config's `curve_id` (looked up under `--config-dir`, default `configs/`);
+`--source` for `data pull` is one of `new-york-fed`, `fred`, `treasury`. Every subcommand accepts
+`--offline` to use a bundled sample instead of a live network call, and `build`/`validate`/
+`compare` degrade gracefully (pillar table only, or a clear "layer not available" message) if
+`openusdcurve.pricing`/`openusdcurve.validation` are not yet installed. See `configs/*.yaml` for
+the curve-config schema and `examples/` for runnable, offline end-to-end scripts.
 
 ## Design
 

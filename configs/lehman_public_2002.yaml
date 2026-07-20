@@ -1,0 +1,41 @@
+# USD-LIBOR-2002-PUBLIC (PLAN §1 Track A, §6 dataset OS-2, §13)
+#
+# Historical single-curve (LIBOR) reconstruction for the Lehman-era valuation date 2002-08-26,
+# built entirely from public/historical data. This is a RECONSTRUCTION using public historical
+# levels, not an exact replica of any specific desk's Lehman Brothers curve on that date — label
+# it accordingly wherever it is displayed (PLAN §6: "reconstructed using public historical data",
+# NOT "exact Lehman curve").
+#
+# See openusdcurve/config.py for the full schema.
+
+curve_id: USD-LIBOR-2002-PUBLIC
+description: >
+  Reconstructed historical USD LIBOR single-curve for valuation date 2002-08-26, from
+  deposit + LIBOR swap levels representative of that period. Ships against a small bundled
+  sample (data/sample/lehman_2002_sample.csv) for offline reproducibility; swap source.type to
+  "fred" (openusdcurve.data.fred.FREDSource, series USD1MTD156N/.../DSWP30) to reconstruct any
+  other historical date from FRED's archived LIBOR/swap series.
+
+classification:
+  functional: true
+  market_representativeness: Low
+  notes: >
+    RECONSTRUCTED, NOT EXACT LEHMAN: levels are illustrative of public historical LIBOR/swap
+    data for the date, not a recovered copy of any specific institution's book. Single-curve
+    (LIBOR-discounted) bootstrap, consistent with pre-2008 market convention (PLAN §1 Track A).
+
+source:
+  type: csv
+  params:
+    path: data/sample/lehman_2002_sample.csv
+    name: lehman-2002-public-csv
+
+instruments:
+  include_types:
+    - deposit
+    - libor_swap
+  notes: "ON/1M/3M/6M/12M LIBOR deposits + 2Y/5Y/10Y/30Y LIBOR swaps."
+
+interpolation: log_linear_discount
+day_count: act365f
+default_valuation_date: 2002-08-26
