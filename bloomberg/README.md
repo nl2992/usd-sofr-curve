@@ -15,7 +15,32 @@ is expected.
 | **SOFR_Futures** | SR3 (`SFRA Comdty`, 3M ×20) and SR1 (`SERA Comdty`, 1M ×13) chains via `BDS(...,"FUT_CHAIN")` that spill contract tickers down column A; per-contract fields + implied rate `= 100 − PX_LAST`. |
 | **SOFR_OIS_Quotes** | Full `USOSFR…` OIS strip 1W–50Y: bid/ask/last + mid `=(bid+ask)/2` (falls back to last); recommended bootstrap set flagged. **Maturity date and Tenor (yrs) are live formulas parsed from the tenor label** (e.g. `"18M"` → `EDATE(spot,18)`) off the T+2 spot, so they update with the valuation date. |
 | **Bootstrap** | Live single-curve OIS bootstrap from the OIS mids → discount factors, zero & forward rates, plus a Δz-vs-S490 column. |
-| **Curve_Interface** | Shared `D(0,t)`: interpolates the SOFR curve to ANY date via piecewise-flat forward. Demo rows = standard quarterly CDS dates (20 Mar/Jun/Sep/Dec). The discounting engine for both Swap_Pricer and the (planned) CDS module. |
+| **Curve_Interface** | Shared `D(0,t)`: interpolates the SOFR curve to ANY date via piecewise-flat forward. Demo rows = standard quarterly CDS dates (20 Mar/Jun/Sep/Dec). The discounting engine for both Swap_Pricer and the CDS module. |
+| **CDS_Parameters** | Credit assumptions — recovery (input, 40%), notional, standard coupon, direction. Recovery is an assumption, not bootstrapped. |
+| **CDS_Quotes** | Single-name CDS par spreads: `BDP(ticker,"PX_LAST")` with a manual demo fallback so it runs immediately. One entity / seniority / clause. |
+| **CDS_Schedule** | Quarterly premium & default schedule to 10Y. DF from the SOFR `Curve_Interface`, survival `Q(t)=Q_prev·exp(-λ·dt)` from the hazard curve, plus premium/accrual/protection PV factors per period. |
+| **Hazard_Bootstrap** | Piecewise-constant hazard curve. Each λ defaults to the **forward-hazard approximation** (reprices within a few bp) and is **Goal-Seekable** (set the repricing-error cell to 0 by changing λ, top-down) for an exact fit. |
+| **CDS_Pricer** | Prices any CDS off both curves: RPV01, protection & premium legs, par spread, PV, upfront, CS01. |
+| **CDS_Validation** | `Q(0)=1`, survival monotone, λ≥0, repricing error → 0, and the flat-curve check `s ≈ (1−R)·λ`. |
+
+## The CDS module (credit curve on top of SOFR)
+
+Modular by design — the SOFR curve stays the discounting engine; a **separate hazard-rate
+bootstrap** sits on top, and the CDS pricer combines both. Nothing credit touches the Bootstrap
+sheet.
+
+- **Discounting** flows through `Curve_Interface` (the shared `D(0,t)`), so any change to
+  fixings/futures/OIS propagates into every CDS PV automatically.
+- **Survival** uses piecewise-constant hazards: `Q(0,t) = exp(−∫λ)`, the credit analogue of the
+  SOFR curve's piecewise-flat forwards.
+- **Par spread** `s = (1−R)·Σ D(T̄)·ΔQ / RPV01`, with `RPV01 = Σ α·D·Q + accrual-on-default`.
+- **Hazard bootstrap:** each λ defaults to the forward-hazard approximation (validated to reprice
+  within a few bp of the market spreads); for an exact fit run **Goal Seek** per pillar
+  (Data → What-If → Goal Seek: set the repricing-error cell to 0 by changing λ, top row first).
+  Fully self-contained in Excel — no VBA.
+
+Recovery is an **input**: changing `R` re-fits every hazard even when spreads are unchanged
+(`λ = λ(R)`).
 | **Swap_Pricer** | Dynamic SWPM-style Fixed-vs-SOFR OIS valuation off the Bootstrap curve: NPV, par coupon, DV01/PV01, cashflow schedule. |
 | **Bloomberg_S490_Validation** | Bloomberg's own USD SOFR curve (`YCSW0490 Index`) — benchmark, not an input. |
 | **Conventions** | DES/FLDS convention grid for representative OIS (`USOSFRC/1/5/30`) + SWPM cashflow-export guidance. |
