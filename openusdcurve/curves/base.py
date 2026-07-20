@@ -47,8 +47,9 @@ class Curve(Protocol):
 class DiscountCurve:
     """Concrete curve: pillar discount factors + an interpolator (default log-linear).
 
-    Implemented by sub-agent B. This stub fixes the constructor and public surface so the data,
-    pricing, and validation layers can import and type against it immediately.
+    Implemented by sub-agent B in ``curves/discount.py``. This stub fixes the constructor and
+    public surface so the data, pricing, and validation layers can import and type against it
+    immediately; the real implementation is spliced in at the bottom of this module.
     """
 
     reference_date: date
@@ -70,3 +71,20 @@ class DiscountCurve:
 
     def forward_rate(self, d1: date, d2: date) -> float:  # pragma: no cover - stub
         raise NotImplementedError
+
+
+# --- Real implementation splice ---------------------------------------------------------
+# ``curves/discount.py`` imports ``Interpolator``/``year_fraction`` from this module, so an
+# eager `from openusdcurve.curves.discount import DiscountCurve` here would circular-import
+# whenever ``discount.py`` (rather than this module) is the first one loaded. Instead, drop
+# the stub name and resolve ``base.DiscountCurve`` lazily via module ``__getattr__`` (PEP 562):
+# by the time it's actually accessed, both modules can finish importing each other cleanly.
+del DiscountCurve
+
+
+def __getattr__(name: str):  # noqa: D103
+    if name == "DiscountCurve":
+        from openusdcurve.curves.discount import DiscountCurve as _DiscountCurve
+
+        return _DiscountCurve
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

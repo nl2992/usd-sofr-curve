@@ -1,0 +1,28 @@
+{
+  "refRates": [
+    {
+      "effectiveDate": "2026-07-16",
+      "index": 1.14830219,
+      "sofr30DayAverage": 5.29,
+      "sofr90DayAverage": 5.31,
+      "sofr180DayAverage": 5.19,
+      "revisionIndicator": "N"
+    },
+    {
+      "effectiveDate": "2026-07-17",
+      "index": 1.14847000,
+      "sofr30DayAverage": 5.29,
+      "sofr90DayAverage": 5.31,
+      "sofr180DayAverage": 5.19,
+      "revisionIndicator": "N"
+    },
+    {
+      "effectiveDate": "2026-07-20",
+      "index": 1.14872341,
+      "sofr30DayAverage": 5.30,
+      "sofr90DayAverage": 5.31,
+      "sofr180DayAverage": 5.20,
+      "revisionIndicator": "N"
+    }
+  ]
+}
