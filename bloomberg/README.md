@@ -15,6 +15,7 @@ is expected.
 | **SOFR_Futures** | SR3 (`SFRA Comdty`, 3M ×20) and SR1 (`SERA Comdty`, 1M ×13) chains via `BDS(...,"FUT_CHAIN")` that spill contract tickers down column A; per-contract fields + implied rate `= 100 − PX_LAST`. |
 | **SOFR_OIS_Quotes** | Full `USOSFR…` OIS strip 1W–50Y: bid/ask/last + mid `=(bid+ask)/2` (falls back to last); recommended bootstrap set flagged. **Maturity date and Tenor (yrs) are live formulas parsed from the tenor label** (e.g. `"18M"` → `EDATE(spot,18)`) off the T+2 spot, so they update with the valuation date. |
 | **Bootstrap** | Live single-curve OIS bootstrap from the OIS mids → discount factors, zero & forward rates, plus a Δz-vs-S490 column. |
+| **Curve_Interface** | Shared `D(0,t)`: interpolates the SOFR curve to ANY date via piecewise-flat forward. Demo rows = standard quarterly CDS dates (20 Mar/Jun/Sep/Dec). The discounting engine for both Swap_Pricer and the (planned) CDS module. |
 | **Swap_Pricer** | Dynamic SWPM-style Fixed-vs-SOFR OIS valuation off the Bootstrap curve: NPV, par coupon, DV01/PV01, cashflow schedule. |
 | **Bloomberg_S490_Validation** | Bloomberg's own USD SOFR curve (`YCSW0490 Index`) — benchmark, not an input. |
 | **Conventions** | DES/FLDS convention grid for representative OIS (`USOSFRC/1/5/30`) + SWPM cashflow-export guidance. |
