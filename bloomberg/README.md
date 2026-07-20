@@ -14,6 +14,7 @@ is expected.
 | **SOFR_Fixings** | Overnight SOFR (`SOFRRATE Index`): current `BDP` + daily `BDH` history. |
 | **SOFR_Futures** | SR3 (`SFRA Comdty`, 3M ×20) and SR1 (`SERA Comdty`, 1M ×13) chains via `BDS(...,"FUT_CHAIN")` that spill contract tickers down column A; per-contract fields + implied rate `= 100 − PX_LAST`. |
 | **SOFR_OIS_Quotes** | Full `USOSFR…` OIS strip 1W–50Y: bid/ask/last + mid `=(bid+ask)/2` (falls back to last); recommended bootstrap set flagged. |
+| **Bootstrap** | Live single-curve OIS bootstrap from the OIS mids → discount factors, zero & forward rates, plus a Δz-vs-S490 column. |
 | **Bloomberg_S490_Validation** | Bloomberg's own USD SOFR curve (`YCSW0490 Index`) — benchmark, not an input. |
 | **Conventions** | DES/FLDS convention grid for representative OIS (`USOSFRC/1/5/30`) + SWPM cashflow-export guidance. |
 
@@ -43,6 +44,27 @@ is expected.
 Spot-check on the terminal (not publicly documentable): the weekly short-end codes
 `USOSFR1Z/2Z/3Z` and the `USOSFR1F` (18M) code — these are the standard Bloomberg USOSFR
 generic-tenor forms, but confirm they resolve under your entitlement.
+
+## The Bootstrap tab
+
+A self-contained, in-Excel single-curve OIS bootstrap from the `SOFR_OIS_Quotes` mid strip:
+
+```
+DF_n = (1 − S_n · A_(n-1)) / (1 + S_n · τ_n),   A_(n-1) = Σ τ_i · DF_i
+```
+
+where `S_n` is the par OIS mid, `τ` is ACT/360 between consecutive pillar maturities, and the
+recursion runs top-to-bottom (each row references the rows above it). Outputs: **discount factor**
+`P(0,T)`, **continuously-compounded zero rate** `z = −ln(DF)/T`, and the **simple forward** over
+each pillar interval. Paste Bloomberg S490 zero rates into the yellow column J to get **Δz in bp**
+— the same dealer-curve validation the Lehman paper performs.
+
+**Accuracy:** exact for the sub-1Y money-market points and the annual 1Y–10Y section (pillars
+coincide with coupon dates); the sparse long end (12–50Y) uses the pillar grid *as* the coupon
+schedule — a standard, transparent approximation that is good to ~20Y and increasingly coarse at
+25Y+. Validated numerically: all discount factors positive and strictly monotone, zero rates
+tracking the par-strip shape. For the exact interpolated-annuity build across every year, use the
+`openusdcurve` Python engine (`configs/sofr_market.yaml`).
 
 ## Field-mnemonic notes (verified live on terminal)
 
