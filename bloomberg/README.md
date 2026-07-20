@@ -60,14 +60,21 @@ recursion runs top-to-bottom (each row references the rows above it). Outputs: *
 each pillar interval. Paste Bloomberg S490 zero rates into the yellow column J to get **Δz in bp**
 — the same dealer-curve validation the Lehman paper performs.
 
-**Payment convention (fixed):** OIS ≤ 1Y pay a **single** coupon at maturity, so those points use
-`DF = 1/(1 + S·τ0)`; OIS ≥ 18M pay **annual** coupons, so `DF = (1 − S·A_prior)/(1 + S·τ_coupon)`
-where `A_prior` accumulates `τ·DF` **only at annual coupon dates** (column I books zero on the
-sub-annual and 18M rows, so 2Y's annuity correctly sees 1Y — not 18M or the monthly points). This
-was the fix for an earlier version that treated every pillar as a coupon date and mis-priced the
-front ~7bp. **Every input now reprices to par to ~0 bp** (validated numerically 1W–50Y); the
-sparse long end (12–50Y) still uses the pillar grid as its coupon schedule. For the fully exact
-interpolated-annuity build, use the `openusdcurve` Python engine (`configs/sofr_market.yaml`).
+**Three segments (Zhou 2002 structure), cutovers at 1Y and 5Y so nothing overlaps:**
+
+- **Short (o/n–1Y)** — single-payment SOFR OIS: `DF = 1/(1 + S·τ0)`.
+- **Middle (1Y–5Y)** — **SR3 futures**: the DF at 18M/2Y/3Y/4Y/5Y is interpolated off a futures
+  chain (helper block, cols O–W) that discounts each contract's forward rate forward from the OIS
+  1Y DF. Each contract discounts only its portion **beyond 1Y** (`τ eff`), so pre-1Y contracts
+  pass through and the strip picks up exactly where the short OIS stops. A **convexity** column
+  (T, in bp, default 0) lets you correct futures→forward.
+- **Long (5Y–50Y)** — annual SOFR OIS swaps: `DF = (1 − S·A_prior)/(1 + S·τ_coupon)`, with the
+  annuity (col I) built from the short + futures-derived DFs.
+
+Validated numerically: the futures-built mid DFs are monotonic and land within a few bp of the
+pure-OIS values (they price the same market). Payment convention is respected throughout — OIS
+≤1Y pay one coupon, ≥18M pay annually, and the annuity books `τ·DF` only at true annual coupon
+dates. For the fully exact interpolated-annuity build, use the `openusdcurve` Python engine.
 
 ## The Swap_Pricer tab
 
