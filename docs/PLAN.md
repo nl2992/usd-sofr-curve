@@ -130,3 +130,16 @@ comparison. **Web scraping is NOT a prerequisite** — manual CSV first.
 - **Sub-agent D — CLI, configs, examples, docs:** `cli.py`, `configs/*.yaml`, `examples/*`, README wiring, end-to-end smoke test.
 
 All agents code against Section 4 contracts and must not alter them.
+
+## 12. Known limitations (v0.1)
+
+- **SyntheticSource pillar collision:** the default tenor grids put the 12M deposit and the 1Y OIS
+  on the same pillar date, which trips `DiscountCurve` node dedup and breaks bootstrap bracketing
+  if the *full* default instrument set is bootstrapped naively. The example scripts dedupe by
+  pillar date; real configs avoid overlapping instruments. A proper fix (priority-based pillar
+  dedup in the factory) is deferred.
+- **Futures convexity:** `Future.implied_quote` uses `price = 100*(1 - forward)` with no convexity
+  adjustment. Fine for the front-end 0.1 curves; a hook is left for a Hull-White/parallel adjustment.
+- **Long end:** public OIS beyond the futures strip is proxied (Treasury + spread) and labelled;
+  it is not a market curve. See §3 C1/C2/C3.
+- **QuantLib (L5) is optional** and absent in CI here; the comparison reports `skipped=True`.
