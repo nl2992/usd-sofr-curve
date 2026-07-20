@@ -44,6 +44,19 @@ Spot-check on the terminal (not publicly documentable): the weekly short-end cod
 `USOSFR1Z/2Z/3Z` and the `USOSFR1F` (18M) code — these are the standard Bloomberg USOSFR
 generic-tenor forms, but confirm they resolve under your entitlement.
 
+## Field-mnemonic notes (verified live on terminal)
+
+- **Futures:** `FUT_CONTRACT_DATE` is **not** a valid Bloomberg field — replaced with
+  `FUT_DLV_DT_FIRST` (the SR3/SR1 reference-quarter start, i.e. the future's accrual start).
+  `SECURITY_DES`, `PX_LAST/BID/ASK`, `FUT_MONTH_YR`, `LAST_TRADEABLE_DT`, `VOLUME`, `OPEN_INT`
+  all resolve; implied rate = `100 − PX_LAST`.
+- **Conventions:** `USOSFR… BGN Curncy` are *rate-quote* securities and do not carry leg-level
+  static fields, so only `CRNCY`, `CALENDAR_CODE`, and `DAY_CNT_DES` are pulled via `BDP`. All
+  other conventions (floating day count, pay frequency, payment lag, EOM, compounding, lookback)
+  are captured from `DES`/`SWPM` on an actual swap — the tab lists the USD-SOFR-OIS
+  market-standard defaults as the expected values. Note: Bloomberg returns `#N/A Invalid Field`
+  as **text**, so `IFERROR` cannot suppress it — using valid mnemonics (not wrapping) is the fix.
+
 ## Notes / caveats
 
 - **Price source consistency:** the `PX_SRC` parameter (default `BGN`) is applied across every
