@@ -13,7 +13,7 @@ is expected.
 | **Instructions** | Parameters (valuation date, history window, price source, tickers as named ranges), the Lehman→modern mapping, and the "do not substitute" warnings (Term SOFR, ICE Swap Rate). |
 | **SOFR_Fixings** | Overnight SOFR (`SOFRRATE Index`): current `BDP` + daily `BDH` history. |
 | **SOFR_Futures** | SR3 (`SFRA Comdty`, 3M ×20) and SR1 (`SERA Comdty`, 1M ×13) chains via `BDS(...,"FUT_CHAIN")` that spill contract tickers down column A; per-contract fields + implied rate `= 100 − PX_LAST`. |
-| **SOFR_OIS_Quotes** | Full `USOSFR…` OIS strip 1W–50Y: bid/ask/last + mid `=(bid+ask)/2` (falls back to last); recommended bootstrap set flagged. |
+| **SOFR_OIS_Quotes** | Full `USOSFR…` OIS strip 1W–50Y: bid/ask/last + mid `=(bid+ask)/2` (falls back to last); recommended bootstrap set flagged. **Maturity date and Tenor (yrs) are live formulas parsed from the tenor label** (e.g. `"18M"` → `EDATE(spot,18)`) off the T+2 spot, so they update with the valuation date. |
 | **Bootstrap** | Live single-curve OIS bootstrap from the OIS mids → discount factors, zero & forward rates, plus a Δz-vs-S490 column. |
 | **Swap_Pricer** | Dynamic SWPM-style Fixed-vs-SOFR OIS valuation off the Bootstrap curve: NPV, par coupon, DV01/PV01, cashflow schedule. |
 | **Bloomberg_S490_Validation** | Bloomberg's own USD SOFR curve (`YCSW0490 Index`) — benchmark, not an input. |
