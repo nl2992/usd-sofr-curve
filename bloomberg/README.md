@@ -14,7 +14,8 @@ is expected.
 | **SOFR_Fixings** | Overnight SOFR (`SOFRRATE Index`): current `BDP` + daily `BDH` history. |
 | **SOFR_Futures** | SR3 (`SFRA Comdty`, 3M ×20) and SR1 (`SERA Comdty`, 1M ×13) chains via `BDS(...,"FUT_CHAIN")` that spill contract tickers down column A; per-contract fields + implied rate `= 100 − PX_LAST`. |
 | **SOFR_OIS_Quotes** | Full `USOSFR…` OIS strip 1W–50Y: bid/ask/last + mid `=(bid+ask)/2` (falls back to last); recommended bootstrap set flagged. **Maturity date and Tenor (yrs) are live formulas parsed from the tenor label** (e.g. `"18M"` → `EDATE(spot,18)`) off the T+2 spot, so they update with the valuation date. |
-| **Bootstrap** | Live single-curve OIS bootstrap from the OIS mids → discount factors, zero & forward rates, plus a Δz-vs-S490 column. |
+| **Bootstrap** | **Purely-OIS** SOFR curve: short single-payment OIS (≤1Y) + annual OIS swaps (18M–50Y). The production curve — Swap_Pricer, Curve_Interface, and the CDS module all discount off this. |
+| **Bootstrap_Lehman** | **Lehman-2002 methodology** on modern SOFR: short OIS (≤1Y) + **SR3 futures** (1Y–5Y, own quarterly-only chain) + OIS swaps (5Y–50Y). Compare col H against the OIS `Bootstrap` to see the futures-vs-OIS difference. |
 | **Curve_Interface** | Shared `D(0,t)`: interpolates the SOFR curve to ANY date via piecewise-flat forward. Demo rows = standard quarterly CDS dates (20 Mar/Jun/Sep/Dec). The discounting engine for both Swap_Pricer and the CDS module. |
 | **CDS_Parameters** | Credit assumptions — recovery (input, 40%), notional, standard coupon, direction. Recovery is an assumption, not bootstrapped. |
 | **CDS_Quotes** | Single-name CDS par spreads: `BDP(ticker,"PX_LAST")` with a manual demo fallback so it runs immediately. One entity / seniority / clause. |
