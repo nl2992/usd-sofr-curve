@@ -145,6 +145,8 @@ Two results that do not match the textbook line:
 Needs `CDSBrent.bas` and `CDSRootFinders.bas` imported and the file saved as `.xlsm`.
 
 
+> Step-by-step runbook with the literal formulas: **[CDSW_MATCH.md](CDSW_MATCH.md)**
+
 ### Overriding a spread
 
 Two ways, and the simple one is usually right.
