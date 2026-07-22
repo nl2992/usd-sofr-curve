@@ -253,9 +253,11 @@ in our stripper to ~1e-6 bp.
 First external check of the credit side. USD, SNAC 2014, XR14, senior, 10mm,
 coupon 100bp, R=0.40, maturity 06/20/2031, traded spread 51.5600.
 
-CDSW's Term table showed a SINGLE row, so it was pricing flat at the traded
-spread rather than off a term structure. Reproducing the screen means entering
-that spread at all six tenors.
+The first capture was on CMAN, a single-contributor curve, giving 51.5600 at 5Y
+against our 66.5597 - a 15bp gap that looked like a wrong instrument or doc
+clause. It was neither. Our pull quotes <ticker> & " BEST Curncy", the BEST
+composite. Switching CDSW's CDS Curve dropdown to BEST gives 66.5597, matching
+our par spread EXACTLY. Source, not instrument.
 
 |                  |      model |       CDSW |  gap |
 | ---------------- | ---------: | ---------: | ---: |
@@ -281,4 +283,35 @@ Two errors this exposed and closed:
 IR DV01 51.36, Rec Risk 72.64 for this trade. CDSRisk.bas computes all three by
 full revalue with re-stripping, but they have never been compared against a
 capture with the pricing fixed. That is the next check, not a finished result.
+
+
+## Second capture: same trade on BEST Mid
+
+Traded spread 66.5597, which our pull reproduces exactly.
+
+|                  |       CDSW |   old sheet |    gap |  (3.2) sheet |  gap |
+| ---------------- | ---------: | ----------: | -----: | -----------: | ---: |
+| par spread bp    |    66.5597 |     66.5597 |      0 |      66.5597 |    0 |
+| points upfront   |    -1.4633 |     -1.5001 |      - |      -1.4721 |    - |
+| principal        |   -146,330 |    -150,013 | -3,683 |     -147,210 | -880 |
+| accrued          |     -8,611 |      -8,611 |      0 |       -8,611 |    0 |
+| cash             |   -154,941 |    -158,624 | -3,683 |     -155,821 | -880 |
+| default exposure |  6,146,329 |   6,150,013 |  3,684 |    6,147,210 |  881 |
+
+880 on 10mm is 0.0088%. The (S-C)*RPV01 shortcut accounts for 3,683 of the
+3,683; what is left is the discount curve, CDSW on 490 Mid against our own
+bootstrap.
+
+Risk measures, still to be confirmed on the sheet rather than by transliteration:
+
+|             |    CDSW | sticky (old) | re-fit (estimated) |
+| ----------- | ------: | -----------: | -----------------: |
+| Spread DV01 | 4431.93 |      4486.00 |            4358.51 |
+| IR DV01     |   35.13 |        19.73 |              36.38 |
+| Rec Risk 1% |   64.15 |     -4880.97 |              49.95 |
+
+IR DV01 lands within 4% of CDSW on the re-fit method against 44% low on sticky,
+and Rec Risk stops having the wrong sign. That is the case for D4 being right,
+but it is an estimate from transliteration - the sheet's own numbers have not
+been read yet.
 
