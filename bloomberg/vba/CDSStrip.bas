@@ -81,6 +81,7 @@ Public Function CDS_StripHazard(ByVal k As Long, ByVal method As String, _
         For j = 1 To nT
             iLo = i0: iHi = i0 - 1
             For i = i0 To nP
+                ' both sides are date serials - see NumOf
                 If Num2(gA, i) > 0# And _
                    NumOf(payDates.Cells(i).Value) <= NumOf(mats.Cells(j).Value) + 0.5 Then
                     iHi = i
@@ -176,6 +177,7 @@ Private Function Solve(ByVal mth As String) As Double
     Dim a As Double, b As Double, fa As Double, fb As Double
     mIter = 0
     a = 0#: b = 3#
+    If gHi < gLo Then Solve = -1#: Exit Function        ' empty segment - a bug, not a quote problem
     fa = F(a): fb = F(b)
     If fa * fb > 0# Then Solve = 0#: Exit Function      ' p.9 not strippable
 
@@ -326,5 +328,16 @@ Private Function Num2(ByRef v As Variant, ByVal i As Long) As Double
 End Function
 
 Private Function NumOf(ByVal v As Variant) As Double
-    If IsNumeric(v) Then NumOf = CDbl(v) Else NumOf = 0#
+    ' IsNumeric returns FALSE for a Date in VBA. Dates arrive here from
+    ' CDS_Schedule!C and Hazard_Bootstrap!B, so testing IsNumeric alone made
+    ' NumOf return 0 for both sides of the segment comparison - every period
+    ' fell into segment 1 and segments 2..N were empty, which is why every
+    ' hazard past the first came back as exactly 0.
+    If IsDate(v) Then
+        NumOf = CDbl(CDate(v))
+    ElseIf IsNumeric(v) Then
+        NumOf = CDbl(v)
+    Else
+        NumOf = 0#
+    End If
 End Function
