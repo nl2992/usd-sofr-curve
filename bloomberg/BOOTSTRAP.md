@@ -68,3 +68,48 @@ reprices the same pillar DFs but makes the forward continuous across pillars.
   interpolation flows through automatically.
 - **Validation:** paste Bloomberg's S490 zero rates into `Bloomberg_S490_Validation` (col D) to get
   `Δz` per tenor — single-digit bp confirms agreement with the street curve.
+
+
+## 6. Rule selection, and why the result is arbitrage-free
+
+Each pillar is priced by exactly one of four rules, chosen by where it sits — never by hand. In
+`Bootstrap_Check` the choice is reported in column `W`.
+
+| condition | rule | formula |
+| --- | --- | --- |
+| tenor <= 1Y | money market | `DF = 1 / (1 + S*tau0)` |
+| > 1Y, quoted, nothing interpolated behind it | par | `DF = (1 - S*A_prior) / (1 + S*tauC)` |
+| not quoted (gap year) | interpolated | log-linear in DF between its two quoted neighbours |
+| quoted, with gap years behind it | solved | par identity holding **with** those gaps inside the annuity |
+
+No-arbitrage on a discount curve is just `DF` strictly decreasing, which is the same statement as
+every implied forward being positive:
+
+```
+f(i-1, i) = ln( DF(i-1) / DF(i) ) / (T(i) - T(i-1))   >  0
+```
+
+Each branch delivers it:
+
+1. **MM and par** reprice their own quote exactly, so the DF is whatever the market rate implies —
+   positive rates give a decreasing DF.
+2. **Interpolated gap years** are log-linear in DF, i.e. a *constant* instantaneous forward across
+   the segment. Constant and positive at the ends means positive throughout — no gap year can
+   introduce a negative forward between two sane pillars.
+3. **Solved pillars** enforce the par identity including the interpolated gaps, so the segment is
+   consistent with the quote that spans it rather than with a truncated annuity.
+
+The flat-forward property is directly observable and is the cleanest check that (2) is doing what
+it claims — a gap year and the pillar that follows it report the *same* forward:
+
+```
+11Y  interp   fwd 4.638%      13Y  interp   fwd 4.780%
+12Y  SOLVED   fwd 4.638%      15Y  SOLVED   fwd 4.780%
+```
+
+The check itself is in column `AN`; both formulas and the drag ranges are in `README.md`.
+
+**What this does not prove.** It is an internal consistency check, not a statement about Bloomberg.
+A curve can be perfectly arbitrage-free and still be the wrong curve — for that, read `H` and `I`
+against the pasted Bloomberg columns.
+

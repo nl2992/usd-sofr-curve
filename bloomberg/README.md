@@ -1,4 +1,4 @@
-# Bloomberg data template — `USD_SOFR_Curve_Bloomberg.xlsx`
+# Bloomberg data template — `USD_SOFR_Curve_Bloomberg_Pricer.xlsx`
 
 A live Bloomberg workbook for pulling every input needed to bootstrap the **modern** USD SOFR
 curve — the SOFR-era replication of the Lehman (2002) single-curve build. It ships **formulas
@@ -89,6 +89,73 @@ long-end gaps (10Y→15Y→20Y→30Y) — exactly where V2's smoothing matters a
 Spot-check on the terminal (not publicly documentable): the weekly short-end codes
 `USOSFR1Z/2Z/3Z` and the `USOSFR1F` (18M) code — these are the standard Bloomberg USOSFR
 generic-tenor forms, but confirm they resolve under your entitlement.
+
+## The Bootstrap_Check tab (paste a capture, read the error)
+
+Self-contained: it references no other sheet, defines no names and calls no VBA, so it can be
+moved into any workbook as-is. Three blocks, at rows 1 / 75 / 149.
+
+Paste **A:E** off the capture — tenor, date, swap rate (mid) %, BBG zero %, BBG discount — and put
+the capture date in `C3` / `C77` / `C151`. Then read:
+
+| col | is |
+| --- | --- |
+| `F` | our zero % |
+| `G` | our discount |
+| `H` | d zero bp |
+| `I` | d DF |
+| `J` | date check |
+
+The pasted date in `B` is **never used by the maths**. Dates are derived from tenor + curve date;
+`J` flags any pasted date that disagrees by more than 3 days and shows the one it expected. This
+matters: a capture whose date column comes from a different pull (one carrying 11Y and no 18M, say)
+sits one row out of step from 18M to 10Y, which looks exactly like a 40–135bp model error and is
+not one.
+
+`K:V` is the working grid and `X:AM` the solver, both left visible. See `BOOTSTRAP.md` for what
+each column does.
+
+### Two audit columns to drag down
+
+Neither ships in the file — paste the formula in the first grid row and drag.
+
+**`W` — which rule this pillar uses.** In `W8`:
+
+```
+=IF(L8="","",IF(L8<=1,"MM   DF=1/(1+S*tau0)",IF(R8=0,"interp   log-linear DF (step forward)",IF(R7=0,"SOLVED   par identity incl. gaps","par   DF=(1-S*A)/(1+S*tauC)"))))
+```
+
+**`AN` — the no-arb check.** In `AN8` (it has to sit after the solver strip):
+
+```
+=IF(OR(U8="",N8=""),"",IF(LN(IF(ISNUMBER(U7),U7,1)/U8)/(N8-IF(ISNUMBER(N7),N7,0))*100<=0,"ARB  fwd "&TEXT(LN(IF(ISNUMBER(U7),U7,1)/U8)/(N8-IF(ISNUMBER(N7),N7,0))*100,"0.000")&"%","ok  fwd "&TEXT(LN(IF(ISNUMBER(U7),U7,1)/U8)/(N8-IF(ISNUMBER(N7),N7,0))*100,"0.000")&"%"))
+```
+
+Drag both over the **grid** rows only, not the paste rows:
+
+| block | from | to |
+| --- | --- | --- |
+| 1 | `W8` / `AN8` | 72 |
+| 2 | `W82` / `AN82` | 146 |
+| 3 | `W156` / `AN156` | 220 |
+
+On the S490 07/22/2026 capture this gives 15 MM + 10 par + 33 interp + 7 SOLVED = 65 pillars, every
+implied forward positive, no ARB flags.
+
+Worth reading once, because it is the interpolation confirming itself out of the DFs — the forward
+is flat across each segment:
+
+```
+11Y  interp   fwd 4.638%
+12Y  SOLVED   fwd 4.638%
+13Y  interp   fwd 4.780%
+15Y  SOLVED   fwd 4.780%
+```
+
+`W` **reports** the rule, it does not select it. The rule is forced by where the pillar sits, and
+that is what keeps the curve arb-free — a manual override would let a pillar contradict its own
+quote, which is how you create arbitrage rather than prevent it.
+
 
 ## The Bootstrap tab
 
