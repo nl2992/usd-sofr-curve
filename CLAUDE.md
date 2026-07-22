@@ -89,7 +89,7 @@ PV01 = premium leg *net of accrued interest* at C=1bp, discounted from settlemen
 - Fix `CDS_Pricer!B15` and the same expression inside `Hazard_Solver`'s objective.
 - Re-verify the stripper still reprices its inputs after the change.
 
-### D3 — Upfront per (3.2)   ⚠️ PARTIAL
+### D3 — Upfront per (3.2)   ✅ DONE (validated against CDSW, see below)
 ```
 Upfront = Market Value / D(T_s) + Accrued Interest
 ```
@@ -106,7 +106,7 @@ one live CDSW comparison at close fixes it.
 Target: CINDBK 5Y 07/21/26 → pts upfront −1.97596265, price 101.97596265, principal −197,597,
 accrued −8,333 (30d), cash −205,930, def exp 6,197,596.
 
-### D4 — Risk by re-stripping, not analytic   ⬜ NEXT, largest build
+### D4 — Risk by re-stripping, not analytic   ✅ BUILT (CDSRisk.bas), not yet checked against a capture
 p.9: *"Spread DV01 and IR DV01 represent the change in the value of the transaction as a result
 of a parallel shift of 1bp in the CDS curve or interest rate curve respectively"*, obtained by
 **rerunning survival probability stripping**.
@@ -160,7 +160,7 @@ Protection seller receives the **full** coupon for the previous period on the fi
 
 - Check the front stub in `CDS_Schedule` row 7 against both rules.
 
-### D8 — Strippability check   ⬜
+### D8 — Strippability check   ✅ DONE (Model_Notes, p.9 bound)
 p.9: calibration fails if the target spread is unreachable; common with inversions. Lower bound
 from the credit triangle:
 ```
@@ -246,3 +246,39 @@ every tenor, which is O-T (9). **The paper does not publish the discount curve u
 hazards themselves cannot be reproduced exactly; treat it as a shape and magnitude check, not a
 unit test. The relationship `Protection / RPV01 = quoted spread` *is* testable and already holds
 in our stripper to ~1e-6 bp.
+
+
+## Validation against CDSW — Wells Fargo, 07/22/2026
+
+First external check of the credit side. USD, SNAC 2014, XR14, senior, 10mm,
+coupon 100bp, R=0.40, maturity 06/20/2031, traded spread 51.5600.
+
+CDSW's Term table showed a SINGLE row, so it was pricing flat at the traded
+spread rather than off a term structure. Reproducing the screen means entering
+that spread at all six tenors.
+
+|                  |      model |       CDSW |  gap |
+| ---------------- | ---------: | ---------: | ---: |
+| par spread bp    |    51.5600 |    51.5600 |    0 |
+| points upfront   |    -2.1323 |    -2.1339 |    0 |
+| principal        |   -213,230 |   -213,394 |  164 |
+| accrued days     |         31 |         31 |    0 |
+| accrued          |     -8,611 |     -8,611 |    0 |
+| cash             |   -221,841 |   -222,005 |  164 |
+| default exposure |  6,213,230 |  6,213,394 | -164 |
+
+164 on 10mm is 0.0016%. The residual is the curve source: CDSW is on 490 Mid with
+a CMAN Ask credit curve, we pull our own.
+
+Two errors this exposed and closed:
+
+1. The CDSW block derived points upfront from (S-C)*RPV01, dropping the -S*AI
+   term and the compounding to T_s. It now comes from (3.2) via B27.
+2. CDS_Schedule period 1 started at VAL_DATE instead of the 1st accrual start,
+   leaving the premium leg short by ~4,100 on 10mm.
+
+**Still unverified:** the risk measures. CDSW reports Spread DV01 4,488.10,
+IR DV01 51.36, Rec Risk 72.64 for this trade. CDSRisk.bas computes all three by
+full revalue with re-stripping, but they have never been compared against a
+capture with the pricing fixed. That is the next check, not a finished result.
+
