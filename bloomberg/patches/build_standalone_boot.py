@@ -61,18 +61,19 @@ def build_block(ws, top, label):
     grow = {t: G0+i for i,t in enumerate(GRID)}
 
     ws.cell(top,1,label).font=TITLE
-    ws.cell(top+1,1,"Paste YELLOW: tenor into A, then swap mid / BBG zero / BBG discount into C:E. "
-                    "Green is computed here — this sheet points at nothing outside itself.").font=NOTE
+    ws.cell(top+1,1,"Paste YELLOW A:E straight off the capture — tenor, date, swap mid, BBG zero, "
+                    "BBG discount. Set the curve date. Green is computed here; this sheet points at "
+                    "nothing outside itself.").font=NOTE
     ws.cell(top+2,2,"Curve date →").font=B
     c=ws.cell(top+2,3,None); c.fill=INP; c.font=BLU; c.border=BOX; c.number_format="mm/dd/yyyy"
-    ws.cell(top+2,4,"← capture date").font=NOTE
     ws.cell(top+3,2,"Spot (T+2bd) →").font=B
     base=f"({CD}+IF(WEEKDAY({CD},2)=6,2,IF(WEEKDAY({CD},2)=7,1,0)))"
     c=ws.cell(top+3,3,f'=IF({CD}="","",{base}+IF(WEEKDAY({base},2)>=4,4,2))')
     c.font=GRN; c.border=BOX; c.number_format="mm/dd/yyyy"
 
     for i,h in enumerate(["Tenor","Date","Swap rate (mid) %","BBG zero %","BBG discount",
-                          "Our zero %","Our discount","d zero bp","d DF"],start=1):
+                          "Our zero %","Our discount","d zero bp","d DF",
+                          "date check"],start=1):
         c=ws.cell(top+6,i,h); c.font=HDR; c.fill=HF; c.border=BOX
         c.alignment=Alignment(horizontal="center",wrap_text=True)
 
@@ -189,16 +190,22 @@ def build_block(ws, top, label):
         m=f'MATCH($A{r},$K${G0}:$K${G1},0)'
         alt=f'MATCH(IF($A{r}="1Y","12M",IF($A{r}="12M","1Y",$A{r})),$K${G0}:$K${G1},0)'
         pick=f'IFERROR({m},{alt})'
-        ws.cell(r,2,f'=IF($A{r}="","",IFERROR(INDEX($M${G0}:$M${G1},{pick}),""))').number_format="mm/dd/yyyy"
+        # B is PASTED. Left alone if the user pastes Bloomberg's date column;
+        # falls back to the derived date only when B is empty.
+        ws.cell(r,2,None).number_format="mm/dd/yyyy"
         ws.cell(r,7,f'=IF($A{r}="","",IFERROR(INDEX($U${G0}:$U${G1},{pick}),""))').number_format="0.00000000"
-        ws.cell(r,6,f'=IF(OR($A{r}="",G{r}=""),"",-LN(G{r})/((B{r}-{CD})/365)*100)').number_format="0.00000"
+        ws.cell(r,6,f'=IF(OR($A{r}="",G{r}=""),"",-LN(G{r})/'
+                    f'INDEX($N${G0}:$N${G1},{pick})*100)').number_format="0.00000"
         ws.cell(r,8,f'=IF(OR(F{r}="",NOT(ISNUMBER(D{r}))),"",(F{r}-D{r})*100)').number_format="0.000"
         ws.cell(r,9,f'=IF(OR(G{r}="",NOT(ISNUMBER(E{r}))),"",G{r}-E{r})').number_format="0.00E+00"
-        for col in (1,3,4,5):
+        for col in (1,2,3,4,5):
             c=ws.cell(r,col); c.fill=PASTE; c.border=BOX; c.font=BLK
-        for col in (2,6,7):
+        for col in (6,7):
             c=ws.cell(r,col); c.fill=CALC; c.border=BOX; c.font=GRN
-        for col in (8,9):
+        ws.cell(r,10,f'=IF(OR($A{r}="",NOT(ISNUMBER($B{r}))),"",'
+                     f'IF(ABS($B{r}-INDEX($M${G0}:$M${G1},{pick}))<=3,"ok",'
+                     f'"MISMATCH "&TEXT(INDEX($M${G0}:$M${G1},{pick}),"mm/dd/yy")))')
+        for col in (8,9,10):
             ws.cell(r,col).border=BOX
         ws.cell(r,3).number_format="0.00000"; ws.cell(r,4).number_format="0.00000"
         ws.cell(r,5).number_format="0.000000"
@@ -214,6 +221,10 @@ def build_block(ws, top, label):
     ws.cell(S+1,7,"max |d DF|").font=B
     c=ws.cell(S+1,8,f'=IF(COUNT($I${P0}:$I${P1})=0,"",MAX(MAX($I${P0}:$I${P1}),-MIN($I${P0}:$I${P1})))')
     c.number_format="0.00E+00"; c.border=BOX; c.fill=CALC
+    ws.cell(S,10,f'=IF(COUNTIF($J${P0}:$J${P1},"MISMATCH*")=0,"dates ok",'
+                 f'COUNTIF($J${P0}:$J${P1},"MISMATCH*")&" DATE MISMATCHES — your pasted date column '
+                 f'is out of step with the tenors; the model uses the derived date")')
+    ws.cell(S,10).font=Font(name=F,size=11,bold=True,color="C00000")
     ws.cell(S+2,1,"If 'priced' is under 'pillars pasted', a tenor label is not on the internal grid "
                   "(1W-3W, 1M-12M, 18M, 1Y-50Y). 12M and 1Y are the same pillar.").font=NOTE
     ws.conditional_formatting.add(f"H{P0}:H{P1}",
@@ -222,10 +233,30 @@ def build_block(ws, top, label):
         CellIsRule(operator="lessThan",formula=["-1"],font=RED))
     return S
 
+def harden(ws, top, G0, G1, NIT):
+    """Wrap the working grid so an empty curve date blanks out instead of
+    spraying #VALUE!. The old guards tested the swap rate, then divided by a tau
+    that was still empty - which is exactly what Nigel hit."""
+    n=0
+    for r in range(G0,G1+1):
+        for c in list(range(13,23))+list(range(24,24+NIT)):
+            cell=ws.cell(r,c)
+            v=cell.value
+            if isinstance(v,str) and v.startswith("=") and not v.startswith("=IFERROR("):
+                cell.value="=IFERROR("+v[1:]+',"")'; n+=1
+            elif isinstance(v,str) and v.startswith("=IFERROR(") and not v.rstrip().endswith(',"")'):
+                cell.value="=IFERROR("+v[1:]+',"")'; n+=1
+    return n
+
 wb=Workbook(); ws=wb.active; ws.title="Bootstrap_Check"
 rows=[]
 for i,top in enumerate([1,75,149],start=1):
     rows.append(build_block(ws,top,f"CURVE TEST CASE {i} — paste and read"))
+    G0=top+7; G1=G0+len(GRID)-1
+    harden(ws,top,G0,G1,NITER)
+    # the one input that is easy to miss, made impossible to miss
+    ws.cell(top+2,4,'=IF($C$%d="","<<<  ENTER THE CURVE DATE  —  nothing computes without it",'
+                    '"")'%(top+2)).font=Font(name=F,size=11,bold=True,color="C00000")
 for col,w in (("A",10),("B",17),("C",12),("D",13),("E",12),("F",14),("G",12),("H",11),("I",12)):
     ws.column_dimensions[col].width=w
 ws.cell(1,11,"WORKING — the bootstrap itself, left visible so every step can be "
