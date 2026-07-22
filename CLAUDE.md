@@ -315,3 +315,26 @@ and Rec Risk stops having the wrong sign. That is the case for D4 being right,
 but it is an estimate from transliteration - the sheet's own numbers have not
 been read yet.
 
+### Where the last 880 goes
+
+Not the discount curve. The schedule's DF(end) reads 0.99383606 at the first pay
+date and 0.81929715 at the last, against 0.99383647 and 0.81931489 computed
+independently off the 07/22/26 SOFR curve - agreement to ~1e-6. An earlier
+hypothesis that the curve link was stale was wrong.
+
+CDSW is valuing the trade on a FLAT curve at the traded spread; the sheet values
+it on the stripped term structure. Its Term table carries a single row with
+Prob 0.0535 at 5Y, which back-solves to a flat hazard of 0.011187 against the
+credit triangle s/(1-R) = 0.011093. The sheet's 5Y segment hazard is 0.016726,
+because the BEST curve rises from 28.04 at 1Y and the low early hazards force the
+5Y segment up to reprice the 66.56 quote.
+
+Both are right. They answer different questions, and the 880 is the whole
+difference between a flat valuation and a term-structure valuation on this trade.
+
+To reproduce a CDSW screen exactly, override all six tenors with the traded
+spread. Priced flat at 66.5597 an independent implementation gives principal
+-146,317 against CDSW's -146,330, 13 dollars on 10mm. Leave the live term
+structure in place for anything else - it is the better valuation and it is what
+exercises the segmentation.
+
