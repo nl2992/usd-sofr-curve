@@ -338,3 +338,26 @@ spread. Priced flat at 66.5597 an independent implementation gives principal
 structure in place for anything else - it is the better valuation and it is what
 exercises the segmentation.
 
+### The strip reprices an inverted curve
+
+Accidentally the best test so far. A partial override left the front end inverted -
+1Y at 66.5597 against 2Y at 36.6461 - and the strip handled it:
+
+| tenor | market | model | repricing error bp | hazard |
+| --- | ---: | ---: | ---: | ---: |
+| 1Y | 66.5597 | 66.5597 | 1.85e-13 | 0.01021051 |
+| 2Y | 36.6461 | 36.6461 | 9.95e-14 | 0.00139046 |
+| 3Y | 46.7084 | 46.7084 | 6.39e-14 | 0.01131768 |
+| 5Y | 66.5597 | 66.5597 | 0.00e+00 | 0.01671367 |
+| 7Y | 81.4143 | 81.4143 | -2.70e-13 | 0.02115236 |
+| 10Y | 94.5492 | 94.5492 | 1.99e-13 | 0.02280147 |
+
+Worth more than the flat-curve match. A flat curve exercises one hazard; this
+exercises the sequential scheme, the segmentation and the solver under an
+inversion, which is the case p.9 warns is often not strippable at all.
+
+The 2Y hazard collapsing to 0.00139 against 0.01021 at 1Y is that squeeze made
+visible: with a high first year, the second segment has almost no room left to
+reprice a lower quote. It cleared the p.9 bound by 3.4bp (36.65 against 33.28)
+and the solver found it.
+
