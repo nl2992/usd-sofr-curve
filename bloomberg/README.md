@@ -145,6 +145,47 @@ Two results that do not match the textbook line:
 Needs `CDSBrent.bas` and `CDSRootFinders.bas` imported and the file saved as `.xlsm`.
 
 
+### Overriding a spread
+
+Two ways, and the simple one is usually right.
+
+**Hardcode.** Type the spread straight into `CDS_Quotes!F7:F12`, over the formulas.
+`Hazard_Bootstrap!C7 = CDS_Quotes!F7`, so column F is the only gate - whatever F
+says is what the strip uses. Visible, obvious, cannot silently revert. This is
+the right choice for reproducing a CDSW capture.
+
+**Override chain.** Type into `Entities!F7:K7` and let it flow. Four hops:
+
+```
+Entities!F7  ->  Entities!F21  ->  CDS_Entities!AR5  ->  CDS_Quotes!E7  ->  F7
+  input          effective         in use              manual            market
+```
+
+Worth it when you want to flip between live and override often. Two traps:
+
+- `CDS_Quotes!F` must prefer E over the BDP pull. If F still reads
+  `IFERROR(BDP(...), IFERROR(BDP(...), E))` then the live pull wins and the
+  override does nothing. Column H reports OVERRIDE / BDP live / none.
+- Enter the value on `Entities` BEFORE pasting the F formula. Pasting first
+  overwrites a hardcode with a formula that reads an empty E, falls through to
+  BDP, and silently restores the live curve.
+
+### Reproducing a CDSW capture
+
+CDSW values on a FLAT curve at the traded spread - its Term table shows a single
+row. The sheet values on the stripped term structure. Both are right; they answer
+different questions, and on a steep curve the difference is real money.
+
+To match a screen, override all six tenors with the traded spread. On the Wells
+Fargo 07/22/26 capture that gives principal within about 13 dollars on 10mm.
+Leave the live term structure in place otherwise - it is the better valuation and
+the only one that exercises the segmentation.
+
+Check the source too. Our pull quotes `<ticker> & " BEST Curncy"`, the BEST
+composite. CDSW defaulting to CMAN, a single contributor, showed 51.5600 against
+our 66.5597 on the same name - a 15bp gap that was purely the source.
+
+
 ## The Bootstrap_Check tab (paste a capture, read the error)
 
 Self-contained: it references no other sheet, defines no names and calls no VBA, so it can be
