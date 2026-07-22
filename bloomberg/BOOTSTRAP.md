@@ -113,3 +113,27 @@ The check itself is in column `AN`; both formulas and the drag ranges are in `RE
 A curve can be perfectly arbitrage-free and still be the wrong curve — for that, read `H` and `I`
 against the pasted Bloomberg columns.
 
+
+## 7. Root-finding, and what the white paper actually pins down
+
+The curve bootstrap solves seven long-end pillars; the CDS strip solves one hazard per quoted
+maturity. Both are one-dimensional root-finds, and both have a choice of method.
+
+The B-Model white paper (section 4, p.8) fixes the **scheme** and not the algorithm: hazard
+piecewise constant, solved maturity by maturity, each `h_i+1` found on `(T_Mi, T_Mi+1]` with every
+earlier hazard held fixed. It says only "a one-dimensional root-finding algorithm". Anything
+claiming Bloomberg uses a specific named method is going beyond the source.
+
+What that leaves is a cost-and-robustness choice, measured in `CDS_Pricer.xlsx` > `Root_Methods`
+across the eight MATH5030 M2 methods. All eight agree to ~1e-16, so accuracy is not the axis.
+Iteration counts run 52 (bisection) down to 5 (Ridders).
+
+The constraint that actually decides it is `h(t) >= 0` (p.8), a hard model property rather than a
+fitted outcome. Open methods - secant, Newton, Halley, Householder - can step outside the domain
+from a poor start; bracketing methods cannot. That is why the shipped stripper is bisection in
+cells and Brent in VBA, and not the method with the lowest iteration count.
+
+The same reasoning applies to the curve side, where `Bootstrap_Check` solves its long-end pillars
+by fixed-point iteration rather than Newton: the map is a contraction with factor ~`S*tau` ~ 0.04,
+so 16 passes clear machine precision with no derivative, no bracket and no circular reference.
+

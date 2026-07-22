@@ -90,6 +90,61 @@ Spot-check on the terminal (not publicly documentable): the weekly short-end cod
 `USOSFR1Z/2Z/3Z` and the `USOSFR1F` (18M) code — these are the standard Bloomberg USOSFR
 generic-tenor forms, but confirm they resolve under your entitlement.
 
+## CDS_Pricer.xlsx (split out of the curve workbook)
+
+The dependency runs one way, CDS -> Curve_Interface -> Bootstrap, so the cut is clean. Nine CDS
+sheets moved; `Curve_Interface` was copied and became an input sheet, keeping its name so all 4,462
+CDS references were untouched. Its 131 ties to `Bootstrap` (`D7`, `K9:L73`) are now values.
+
+The discount curve is a dated snapshot, not a live link. Repaste `K9:L73` after rebootstrapping.
+
+| tab | what |
+| --- | --- |
+| `Entities` | pick the live name, override recovery or any tenor spread, `On = 0` removes a name |
+| `Curves` | zero curve, discount factors, hazard and survival, market vs model spreads |
+| `Model_Notes` | (3.1)-(3.6), conventions, stripper, p.9 strippability check |
+| `Root_Methods` | eight root-finders on the same objective |
+
+Verified after the split: par spread 95.0000, RPV01 4.368528, strip reprices to 1.08e-05 bp.
+
+### Root_Methods
+
+The eight methods from MATH5030 M2, all solving the strip's own objective
+
+```
+f(h) = (1-R)*Prot(h) - S*( RPV01(h) - AI )          B-Model (3.3)
+```
+
+Derivatives are analytic, not bumped: `Q = Q0*exp(-h*cum)` gives `dQ/dh = -cum*Q` and
+`d2Q/dh2 = cum^2*Q`, so Newton, Halley and Householder are exact.
+
+Measured on the 5Y objective against `scipy.brentq`, tolerance 1e-15:
+
+| method | family | order | iters | \|root - truth\| |
+| --- | --- | --- | --- | --- |
+| bisection | bracketing | linear | 52 | 5.0e-16 |
+| false position | bracketing | super-linear | 12 | 2.4e-17 |
+| secant | open | ~1.618 | 13 | 3.5e-18 |
+| Newton (d=1) | open | 2 | 6 | 6.9e-18 |
+| Halley (d=2) | open | 3 | 6 | 3.5e-18 |
+| Householder d=3 | open | 4 | 6 | 3.5e-18 |
+| Ridders | bracketing hybrid | hybrid | 5 | 2.1e-17 |
+| Brent | bracketing hybrid | hybrid | 9 | 1.4e-17 |
+
+**Baseline is the scheme, not the algorithm.** Section 4 p.8 fixes piecewise-constant hazard solved
+maturity by maturity, each `h_i+1` a one-dimensional root-find with earlier hazards held fixed. The
+paper names no method. `Hazard_Solver` in this workbook is bisection, so that is the flagged row.
+
+Two results that do not match the textbook line:
+
+- Halley and Householder d=3 do not beat Newton here, 6 iterations each. `f` is near-linear in `h`
+  at the root, so the extra order is spent before tolerance is reached.
+- Ridders is fastest at 5, but secant, Newton and Halley can all leave the domain on a bad start.
+  `h >= 0` is a hard constraint (p.8), so the bracketing guarantee outranks the iteration count.
+
+Needs `CDSBrent.bas` and `CDSRootFinders.bas` imported and the file saved as `.xlsm`.
+
+
 ## The Bootstrap_Check tab (paste a capture, read the error)
 
 Self-contained: it references no other sheet, defines no names and calls no VBA, so it can be
