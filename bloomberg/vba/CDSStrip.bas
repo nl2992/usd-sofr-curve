@@ -44,6 +44,7 @@ Private gS As Double, gR As Double, gAI As Double
 Private gQ0 As Double, gPF As Double, gRF As Double
 Private gLo As Long, gHi As Long
 Private gA As Variant, gD As Variant, gE As Variant, gM As Variant
+Private gPd As Variant, gMt As Variant, gSp As Variant
 
 
 Public Function CDS_StripIterations() As Long
@@ -66,11 +67,12 @@ Public Function CDS_StripHazard(ByVal k As Long, ByVal method As String, _
     If Len(mth) = 0 Then mth = "BRENT"
 
     gA = alphas.Value2: gD = dts.Value2: gE = dfEnd.Value2: gM = dfMid.Value2
+    gPd = payDates.Value2: gMt = mats.Value2: gSp = spreads.Value2
     gR = recovery: gAI = aiNet
 
     key = mth & "|" & CStr(recovery) & "|" & CStr(aiNet)
     For i = 1 To nT
-        key = key & "|" & CStr(NumOf(mats.Cells(i).Value)) & ":" & CStr(NumOf(spreads.Cells(i).Value))
+        key = key & "|" & CStr(Num2(gMt, i)) & ":" & CStr(Num2(gSp, i))
     Next i
     For i = 1 To nP
         key = key & "," & Format$(Num2(gE, i), "0.000000000")
@@ -81,13 +83,12 @@ Public Function CDS_StripHazard(ByVal k As Long, ByVal method As String, _
         For j = 1 To nT
             iLo = i0: iHi = i0 - 1
             For i = i0 To nP
-                ' both sides are date serials - see NumOf
-                If Num2(gA, i) > 0# And _
-                   NumOf(payDates.Cells(i).Value) <= NumOf(mats.Cells(j).Value) + 0.5 Then
+                ' both sides are date serials, straight out of Value2
+                If Num2(gA, i) > 0# And Num2(gPd, i) <= Num2(gMt, j) + 0.5 Then
                     iHi = i
                 End If
             Next i
-            gS = NumOf(spreads.Cells(j).Value) / 10000#
+            gS = Num2(gSp, j) / 10000#
             gLo = iLo: gHi = iHi
             h = Solve(mth)
             cH(j) = h
@@ -327,17 +328,9 @@ Private Function Num2(ByRef v As Variant, ByVal i As Long) As Double
     On Error GoTo 0
 End Function
 
-Private Function NumOf(ByVal v As Variant) As Double
-    ' IsNumeric returns FALSE for a Date in VBA. Dates arrive here from
-    ' CDS_Schedule!C and Hazard_Bootstrap!B, so testing IsNumeric alone made
-    ' NumOf return 0 for both sides of the segment comparison - every period
-    ' fell into segment 1 and segments 2..N were empty, which is why every
-    ' hazard past the first came back as exactly 0.
-    If IsDate(v) Then
-        NumOf = CDbl(CDate(v))
-    ElseIf IsNumeric(v) Then
-        NumOf = CDbl(v)
-    Else
-        NumOf = 0#
-    End If
-End Function
+' Every range is read through Value2 and Num2 now. NumOf is gone deliberately:
+' it tested IsNumeric, which returns FALSE for a Date in VBA, so pay dates and
+' maturities both collapsed to 0, the segment test read 0 <= 0.5 and matched
+' every period. Segment 1 took all 40 periods and the rest came back empty,
+' which surfaced as every hazard past the first being exactly 0. Value2 returns
+' Dates as serial Doubles, so the question cannot arise again.
