@@ -237,3 +237,60 @@ Private Function SafeNum(ByVal v As Variant) As Double
         SafeNum = 0#
     End If
 End Function
+
+
+'==============================================================================
+' TenorDate - maturity for a tenor label off a curve date
+'   spot   = curve date + 2 business days
+'   1W..3W = spot + 7*n days
+'   nM     = spot + n months
+'   nY     = spot + 12n months
+'   then modified following, weekends only (no holiday calendar)
+' Reproduces all 32 dates on the S490 07/21/26 capture.
+'==============================================================================
+Public Function TenorDate(ByVal curveDate As Date, ByVal tenor As String) As Variant
+    Dim t As String, unit As String, n As Long, spot As Date, d As Date
+    t = UCase$(Trim$(tenor))
+    If Len(t) < 2 Then TenorDate = CVErr(xlErrValue): Exit Function
+
+    unit = Right$(t, 1)
+    If Not IsNumeric(Left$(t, Len(t) - 1)) Then TenorDate = CVErr(xlErrValue): Exit Function
+    n = CLng(Left$(t, Len(t) - 1))
+
+    spot = AddBusDays(curveDate, 2)
+    Select Case unit
+        Case "W": d = spot + 7 * n
+        Case "M": d = DateAdd("m", n, spot)
+        Case "Y": d = DateAdd("m", 12 * n, spot)
+        Case Else: TenorDate = CVErr(xlErrValue): Exit Function
+    End Select
+
+    TenorDate = ModFollowing(d)
+End Function
+
+
+Private Function AddBusDays(ByVal d As Date, ByVal n As Long) As Date
+    Dim x As Date
+    x = d
+    Do While n > 0
+        x = x + 1
+        If Weekday(x, vbMonday) <= 5 Then n = n - 1
+    Loop
+    AddBusDays = x
+End Function
+
+
+Private Function ModFollowing(ByVal d As Date) As Date
+    Dim x As Date
+    x = d
+    Do While Weekday(x, vbMonday) > 5
+        x = x + 1
+    Loop
+    If Month(x) <> Month(d) Then
+        x = d
+        Do While Weekday(x, vbMonday) > 5
+            x = x - 1
+        Loop
+    End If
+    ModFollowing = x
+End Function
