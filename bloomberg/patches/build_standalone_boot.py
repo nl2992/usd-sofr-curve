@@ -61,8 +61,8 @@ def build_block(ws, top, label):
     grow = {t: G0+i for i,t in enumerate(GRID)}
 
     ws.cell(top,1,label).font=TITLE
-    ws.cell(top+1,1,"Paste the yellow columns. Everything green is computed on this sheet — "
-                    "nothing here points at another sheet.").font=NOTE
+    ws.cell(top+1,1,"Paste YELLOW: tenor into A, then swap mid / BBG zero / BBG discount into C:E. "
+                    "Green is computed here — this sheet points at nothing outside itself.").font=NOTE
     ws.cell(top+2,2,"Curve date →").font=B
     c=ws.cell(top+2,3,None); c.fill=INP; c.font=BLU; c.border=BOX; c.number_format="mm/dd/yyyy"
     ws.cell(top+2,4,"← capture date").font=NOTE
@@ -71,8 +71,8 @@ def build_block(ws, top, label):
     c=ws.cell(top+3,3,f'=IF({CD}="","",{base}+IF(WEEKDAY({base},2)>=4,4,2))')
     c.font=GRN; c.border=BOX; c.number_format="mm/dd/yyyy"
 
-    for i,h in enumerate(["Tenor","Swap rate (mid) %","BBG zero %","BBG discount",
-                          "Date","our DF","our zero %","d zero bp","d DF"],start=1):
+    for i,h in enumerate(["Tenor","Date","Swap rate (mid) %","BBG zero %","BBG discount",
+                          "Our zero %","Our discount","d zero bp","d DF"],start=1):
         c=ws.cell(top+6,i,h); c.font=HDR; c.fill=HF; c.border=BOX
         c.alignment=Alignment(horizontal="center",wrap_text=True)
 
@@ -117,8 +117,8 @@ def build_block(ws, top, label):
     for t in GRID:
         r=grow[t]; u=t[-1]; n=int(t[:-1])
         alt = "1Y" if t=="12M" else ("12M" if t=="1Y" else t)
-        direct=(f'IFERROR(INDEX($B${P0}:$B${P1},MATCH("{t}",$A${P0}:$A${P1},0)),'
-                f'INDEX($B${P0}:$B${P1},MATCH("{alt}",$A${P0}:$A${P1},0)))')
+        direct=(f'IFERROR(INDEX($C${P0}:$C${P1},MATCH("{t}",$A${P0}:$A${P1},0)),'
+                f'INDEX($C${P0}:$C${P1},MATCH("{alt}",$A${P0}:$A${P1},0)))')
         if u=="Y" and n not in QUOTED_Y:
             lo=max(y for y in QUOTED_Y if y<n); hi=min(y for y in QUOTED_Y if y>n)
             rl,rh=grow[f"{lo}Y"],grow[f"{hi}Y"]
@@ -183,29 +183,31 @@ def build_block(ws, top, label):
         ws.cell(top+6,24,"solve →").font=Font(name=F,size=9,bold=True)
 
     # ---------------- answer columns ----------------
+    # A tenor | B date | C swap mid | D BBG zero | E BBG disc | F our zero |
+    # G our disc | H d zero bp | I d DF        (paste A, then C:E)
     for r in range(P0,P1+1):
         m=f'MATCH($A{r},$K${G0}:$K${G1},0)'
         alt=f'MATCH(IF($A{r}="1Y","12M",IF($A{r}="12M","1Y",$A{r})),$K${G0}:$K${G1},0)'
         pick=f'IFERROR({m},{alt})'
-        ws.cell(r,5,f'=IF($A{r}="","",IFERROR(INDEX($M${G0}:$M${G1},{pick}),""))').number_format="mm/dd/yyyy"
-        ws.cell(r,6,f'=IF($A{r}="","",IFERROR(INDEX($U${G0}:$U${G1},{pick}),""))').number_format="0.00000000"
-        ws.cell(r,7,f'=IF(OR($A{r}="",F{r}=""),"",-LN(F{r})/((E{r}-{CD})/365)*100)').number_format="0.00000"
-        ws.cell(r,8,f'=IF(OR(G{r}="",NOT(ISNUMBER(C{r}))),"",(G{r}-C{r})*100)').number_format="0.000"
-        ws.cell(r,9,f'=IF(OR(F{r}="",NOT(ISNUMBER(D{r}))),"",F{r}-D{r})').number_format="0.00E+00"
-        for col in range(1,5):
+        ws.cell(r,2,f'=IF($A{r}="","",IFERROR(INDEX($M${G0}:$M${G1},{pick}),""))').number_format="mm/dd/yyyy"
+        ws.cell(r,7,f'=IF($A{r}="","",IFERROR(INDEX($U${G0}:$U${G1},{pick}),""))').number_format="0.00000000"
+        ws.cell(r,6,f'=IF(OR($A{r}="",G{r}=""),"",-LN(G{r})/((B{r}-{CD})/365)*100)').number_format="0.00000"
+        ws.cell(r,8,f'=IF(OR(F{r}="",NOT(ISNUMBER(D{r}))),"",(F{r}-D{r})*100)').number_format="0.000"
+        ws.cell(r,9,f'=IF(OR(G{r}="",NOT(ISNUMBER(E{r}))),"",G{r}-E{r})').number_format="0.00E+00"
+        for col in (1,3,4,5):
             c=ws.cell(r,col); c.fill=PASTE; c.border=BOX; c.font=BLK
-        for col in (5,6,7):
+        for col in (2,6,7):
             c=ws.cell(r,col); c.fill=CALC; c.border=BOX; c.font=GRN
         for col in (8,9):
             ws.cell(r,col).border=BOX
-        ws.cell(r,2).number_format="0.00000"; ws.cell(r,3).number_format="0.00000"
-        ws.cell(r,4).number_format="0.000000"
+        ws.cell(r,3).number_format="0.00000"; ws.cell(r,4).number_format="0.00000"
+        ws.cell(r,5).number_format="0.000000"
 
     S=P1+2
     ws.cell(S,1,"pillars pasted").font=B
     ws.cell(S,3,f"=COUNTA($A${P0}:$A${P1})").border=BOX
     ws.cell(S,4,"priced").font=B
-    ws.cell(S,6,f"=COUNT($G${P0}:$G${P1})").border=BOX
+    ws.cell(S,6,f"=COUNT($F${P0}:$F${P1})").border=BOX
     ws.cell(S,7,"max |d zero| bp").font=B
     c=ws.cell(S,8,f'=IF(COUNT($H${P0}:$H${P1})=0,"",MAX(MAX($H${P0}:$H${P1}),-MIN($H${P0}:$H${P1})))')
     c.number_format="0.000"; c.border=BOX; c.fill=CALC
@@ -226,8 +228,10 @@ for i,top in enumerate([1,75,149],start=1):
     rows.append(build_block(ws,top,f"CURVE TEST CASE {i} — paste and read"))
 for col,w in (("A",10),("B",17),("C",12),("D",13),("E",12),("F",14),("G",12),("H",11),("I",12)):
     ws.column_dimensions[col].width=w
+ws.cell(1,11,"WORKING — the bootstrap itself, left visible so every step can be "
+             "audited: dates, taus, annuity, then the 16 solver passes").font=NOTE
 for j in range(11,24+NITER):
-    ws.column_dimensions[CL(j)].hidden=True
+    ws.column_dimensions[CL(j)].width=9
 wb.calculation.fullCalcOnLoad=True
 wb.save(OUT)
 print("built",OUT,"| blocks at rows 1 / 75 / 149 | working cols K:AM hidden")
