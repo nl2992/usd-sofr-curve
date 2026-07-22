@@ -20,7 +20,7 @@ derived dates read its own curve date, not VAL_DATE.
 from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Border, Side
 
-WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg.xlsx"
+WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg_Pricer.xlsx"
 BLACK = Font(name="Calibri", size=11)
 NOTE = Font(name="Calibri", size=9, italic=True, color="666666")
 WARN = Font(name="Calibri", size=10, bold=True, color="C00000")

@@ -2,7 +2,7 @@
 from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 
-WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg.xlsx"
+WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg_Pricer.xlsx"
 H1 = Font(name="Calibri", size=12, bold=True)
 HDR = Font(name="Calibri", size=10, bold=True, color="FFFFFF")
 BOLD = Font(name="Calibri", size=11, bold=True)

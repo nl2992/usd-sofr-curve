@@ -27,7 +27,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Border, Side
 from openpyxl.worksheet.datavalidation import DataValidation
 
-WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg.xlsx"
+WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg_Pricer.xlsx"
 
 FONT = "Calibri"
 BLUE = Font(name=FONT, size=11, color="0000FF")

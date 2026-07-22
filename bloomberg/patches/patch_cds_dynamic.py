@@ -17,7 +17,7 @@ off-terminal. Adds the entity-ticker input to CDS_Parameters.
 from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
-WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg.xlsx"
+WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg_Pricer.xlsx"
 
 FONT = "Calibri"
 BLUE = Font(name=FONT, size=11, color="0000FF")

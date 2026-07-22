@@ -20,7 +20,7 @@ gives identical dates - both reproduce all 32 on the S490 capture.
 from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 
-WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg.xlsx"
+WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg_Pricer.xlsx"
 HDR = Font(name="Calibri", size=10, bold=True, color="FFFFFF")
 BOLD = Font(name="Calibri", size=11, bold=True)
 BLUE = Font(name="Calibri", size=11, color="0000FF")

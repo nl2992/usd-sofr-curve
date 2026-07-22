@@ -10,7 +10,7 @@ a 1Y par swap: sheet 4.05108% vs correct 4.03032%, against a 1Y OIS input of
 4.03030% - a 2.08bp error, worst at the short end and decaying with maturity.
 """
 from openpyxl import load_workbook
-WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg.xlsx"
+WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg_Pricer.xlsx"
 wb = load_workbook(WB)
 for sheet, cell in (("Curve_Interface", "L8"), ("Swap_Pricer", "L6")):
     wb[sheet][cell] = "=Bootstrap!$D$4"

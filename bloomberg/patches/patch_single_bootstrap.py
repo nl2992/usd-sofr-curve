@@ -13,7 +13,7 @@ consumers, so it is flagged as unused rather than removed.
 from openpyxl import load_workbook
 from openpyxl.styles import Font
 
-WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg.xlsx"
+WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg_Pricer.xlsx"
 NOTE = Font(name="Calibri", size=9, italic=True, color="666666")
 
 def safe_set(ws, cell, text):

@@ -21,7 +21,7 @@ Where they appear to differ, they do not:
   swap". For USD today that is the SOFR/RFR curve, which is what B-Model p.6 states outright.
 
 Deliverable is the single workbook
-`~/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg.xlsx`.
+`~/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg_Pricer.xlsx`.
 
 ---
 

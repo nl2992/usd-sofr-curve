@@ -10,7 +10,7 @@ on the same pillar date the curve was built from.
 """
 from openpyxl import load_workbook
 
-WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg.xlsx"
+WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg_Pricer.xlsx"
 wb = load_workbook(WB)
 wb["Bootstrap"]["F22"] = "=(B22-VAL_DATE)/360"
 

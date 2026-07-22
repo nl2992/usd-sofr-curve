@@ -22,7 +22,7 @@ Conventions, matched against the reference CDSW screen (CINDBK 5Y, 07/21/26):
 from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Border, Side
 
-WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg.xlsx"
+WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg_Pricer.xlsx"
 BOLD = Font(name="Calibri", size=11, bold=True)
 BLACK = Font(name="Calibri", size=11)
 NOTE = Font(name="Calibri", size=9, italic=True, color="666666")

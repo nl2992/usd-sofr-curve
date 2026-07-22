@@ -12,7 +12,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Border, Side
 import datetime as dt
 
-WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg.xlsx"
+WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg_Pricer.xlsx"
 wb = load_workbook(WB)
 ws = wb["Instructions"]
 ws["B9"] = dt.datetime(2026, 7, 21)

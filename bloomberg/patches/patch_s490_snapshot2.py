@@ -20,7 +20,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Border, Side
 import datetime as dt
 
-WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg.xlsx"
+WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg_Pricer.xlsx"
 BLUE = Font(name="Calibri", size=11, color="0000FF")
 BLACK = Font(name="Calibri", size=11)
 SECT = Font(name="Calibri", size=11, bold=True)

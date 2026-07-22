@@ -24,7 +24,7 @@ CDS, Swap_Pricer K/L for the swap):
 from openpyxl import load_workbook
 from openpyxl.styles import Font
 
-WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg.xlsx"
+WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg_Pricer.xlsx"
 MODE = "Curve_Interface!$J$7"
 NOTE = Font(name="Calibri", size=9, italic=True, color="666666")
 

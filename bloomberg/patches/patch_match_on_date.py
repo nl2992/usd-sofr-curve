@@ -11,7 +11,7 @@ maturity. Match one against the other.
 from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Border, Side
 
-WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg.xlsx"
+WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg_Pricer.xlsx"
 BLACK = Font(name="Calibri", size=11)
 NOTE = Font(name="Calibri", size=9, italic=True, color="666666")
 OF = PatternFill("solid", fgColor="FFF2CC")

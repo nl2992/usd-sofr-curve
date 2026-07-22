@@ -1,6 +1,6 @@
 # Bloomberg pull list — what to capture at close
 
-Verification set for `USD_SOFR_Curve_Bloomberg.xlsx`. Ordered by what blocks what.
+Verification set for `USD_SOFR_Curve_Bloomberg_Pricer.xlsx`. Ordered by what blocks what.
 
 ## The one rule
 

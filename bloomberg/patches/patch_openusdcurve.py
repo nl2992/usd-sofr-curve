@@ -1,5 +1,5 @@
 """
-Patch USD_SOFR_Curve_Bloomberg.xlsx in place:
+Patch USD_SOFR_Curve_Bloomberg_Pricer.xlsx in place:
 
   1. SOFR_OIS_Quotes  — add a Manual quote column so the OIS strip (and therefore
      the whole discount curve) computes with no Bloomberg terminal attached.
@@ -22,7 +22,7 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter as CL
 from openpyxl.worksheet.datavalidation import DataValidation
 
-WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg.xlsx"
+WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg_Pricer.xlsx"
 
 FONT = "Calibri"
 BLUE = Font(name=FONT, size=11, color="0000FF")

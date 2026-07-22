@@ -23,7 +23,7 @@ comparison target.
 from openpyxl import load_workbook
 from openpyxl.styles import Font
 
-WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg.xlsx"
+WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg_Pricer.xlsx"
 wb = load_workbook(WB)
 f = wb["SOFR_Fixings"]
 f["E6"].value = 3.59

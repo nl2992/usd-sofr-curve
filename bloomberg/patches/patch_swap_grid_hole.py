@@ -20,7 +20,7 @@ affected by this.
 from openpyxl import load_workbook
 from openpyxl.styles import Font
 
-WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg.xlsx"
+WB = "/Users/nigelli/Desktop/openusdcurve/bloomberg/USD_SOFR_Curve_Bloomberg_Pricer.xlsx"
 wb = load_workbook(WB)
 sp = wb["Swap_Pricer"]
 # the note had been MERGED across K39:L40, destroying all four grid cells
