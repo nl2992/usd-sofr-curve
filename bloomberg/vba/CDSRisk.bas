@@ -36,6 +36,13 @@ Attribute VB_Name = "CDSRisk"
 '==============================================================================
 Option Explicit
 
+' Zero-argument probe, so a blank risk cell can be told apart from a missing
+' module. CDS_MarketValue is wrapped in IFERROR on the sheet, which hides the
+' difference between "module not loaded" and "the call errored".
+Public Function CDS_RiskLoaded() As String
+    CDS_RiskLoaded = "CDSRisk loaded"
+End Function
+
 Public Function CDS_MarketValue(ByVal bumpSprdBp As Double, ByVal bumpDfBp As Double, _
         ByVal bumpRec As Double, ByVal mats As Range, ByVal spreads As Range, _
         ByVal recovery As Double, ByVal aiNet As Double, ByVal payDates As Range, _
