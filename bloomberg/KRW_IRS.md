@@ -37,3 +37,55 @@ leave 39 unknowns in one equation; walking every quarter leaves one.
 
 Live: change any quote on the Quotes sheet and the whole curve reprices.
 Verified against a hand bootstrap - every DF agrees to 7 decimals.
+
+## Building it by hand (the Book1 rebuild)
+
+If you are rebuilding the three sheets by hand rather than copying them, the live
+formulas are below. Layout used here — note it differs from KRW_IRS_Bootstrap.xlsx,
+which has year and rate the other way round:
+
+**Quotes** — `A` tenor label, `B` Coupon (rate %), `C` Year. Data rows 5-19.
+`tau` in `B2` (0.25).
+
+**Interpolation** — grid starts row 3, `A` = Year (0.25, 0.5, … to 30).
+Helper `G` finds the bracketing quote row; `E` is the interpolated swap rate.
+
+```excel
+G3  =MATCH($A3,Quotes!$C$5:$C$19,1)
+D3  =IF($C3=$B3,0,($A3-$B3)/($C3-$B3))     ' weight, if you keep lo/hi columns
+E3  =INDEX(Quotes!$B$5:$B$19,$G3)+$D3*(INDEX(Quotes!$B$5:$B$19,MIN($G3+1,15))-INDEX(Quotes!$B$5:$B$19,$G3))
+```
+
+`E` reads: lo rate + weight × (hi rate − lo rate). Rates come from `Quotes!$B`
+because in this layout `B` is the coupon and `C` is the year. `MIN($G3+1,15)`
+caps the "hi" at the last quote so 30Y does not run off the end.
+
+**Bootstrap** — starts row 3, `A` Year, `B` Swap rate, `C` DF, `D` Zero, `E` Fwd.
+
+```excel
+A3  =Interpolation!A3
+B3  =Interpolation!E3
+```
+
+Row 3 is the 3m money-market row — type these once:
+
+```excel
+C3  =1/(1+(B3/100)*Quotes!$B$2)
+D3  =(1/C3-1)/A3*100
+E3  =(1/C3-1)/Quotes!$B$2*100
+```
+
+Row 4 down are all identical — type in row 4 and fill to 122:
+
+```excel
+C4  =(1-(B4/100)*Quotes!$B$2*SUM($C$3:C3))/(1+(B4/100)*Quotes!$B$2)
+D4  =(1/C4-1)/A4*100
+E4  =(C3/C4-1)/Quotes!$B$2*100
+```
+
+`SUM($C$3:C3)` — the anchor stays, the end slides, so each DF sums every earlier
+DF; that is the bootstrap chaining. `Quotes!$B$2` is tau, so changing it reprices
+the whole curve.
+
+All formulas verified against the hand bootstrap: every DF to 7 decimals, zero
+errors.
