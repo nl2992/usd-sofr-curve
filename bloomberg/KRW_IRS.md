@@ -89,3 +89,44 @@ the whole curve.
 
 All formulas verified against the hand bootstrap: every DF to 7 decimals, zero
 errors.
+
+### Watch out: is the swap rate a percent or a fraction?
+
+This is the single trap when rebuilding. It decides whether the formulas carry a
+`/100` or not, and getting it wrong makes every DF sit just under 1 (a 10Y DF of
+0.996 instead of 0.657) — plausible-looking and 100x wrong.
+
+- If the Swap rate cell holds **2.91** (plain number, format `0.0000`): divide by
+  100 in the formulas — `(B/100)`.
+- If it holds **0.0291** (i.e. the cell is *percent-formatted* and shows `2.910%`):
+  the value is already a fraction, so **drop the `/100`**.
+
+`KRW_IRS_Bootstrap.xlsx` stores 2.91 (plain), so its formulas use `/100`. A
+percent-formatted rebuild stores 0.0291 and must not. Tell them apart by clicking
+the cell: the formula bar shows the underlying value.
+
+Bootstrap formulas for the **percent-formatted** case (B already a fraction).
+Row 3 is the 3m money-market row; row 4 down is the drag-down:
+
+```excel
+' row 3
+A3  =Interpolation!A3
+B3  =Interpolation!E3
+C3  =1/(1+B3*Quotes!$B$2)
+D3  =(1/C3-1)/A3
+E3  =(1/C3-1)/Quotes!$B$2
+
+' row 4, fill down to row 122 (30Y)
+A4  =Interpolation!A4
+B4  =Interpolation!E4
+C4  =(1-B4*Quotes!$B$2*SUM($C$3:C3))/(1+B4*Quotes!$B$2)
+D4  =(1/C4-1)/A4
+E4  =(C3/C4-1)/Quotes!$B$2
+```
+
+Zero (D) and Future (E) now hold fractions — format them as `%`, or append `*100`
+to those two lines only (never to the DF line). Sanity check after filling down:
+DF(10Y) = 0.657, zero climbs to 6.72% at 30Y, forward turns down to 2.64%. If
+DF(10Y) is still near 0.996 the `/100` is still in the DF formula.
+
+Verified to 30Y against the hand bootstrap: every DF to 7 decimals, zero errors.
