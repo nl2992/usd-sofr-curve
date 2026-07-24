@@ -130,3 +130,57 @@ DF(10Y) = 0.657, zero climbs to 6.72% at 30Y, forward turns down to 2.64%. If
 DF(10Y) is still near 0.996 the `/100` is still in the DF formula.
 
 Verified to 30Y against the hand bootstrap: every DF to 7 decimals, zero errors.
+
+---
+
+## Hedging — Bloomberg tickers and the "is it worth it" test
+
+KRW IRS vs 91-day CD, generic composite tickers. **Confirm each with `<ticker> Curncy DES <GO>`
+and eyeball the market on `ALLQ <GO>` before wiring** — generic tickers occasionally re-map.
+
+| Tenor | Ticker | Role in the hedge |
+|-------|--------|-------------------|
+| 3M CD | `KWCDC Curncy`   | fixing / front — **dust, do not hedge** |
+| 1Y    | `KWSW1 Curncy`   | folds into 2Y |
+| 2Y    | `KWSW2 Curncy`   | **hedge** — receive fixed |
+| 3Y    | `KWSW3 Curncy`   | **hedge** — receive fixed |
+| 4Y    | `KWSW4 Curncy`   | folds into 5Y |
+| 5Y    | `KWSW5 Curncy`   | **hedge** — pay fixed |
+| 7Y    | `KWSW7 Curncy`   | optional split (usually skip) |
+| 10Y   | `KWSW10 Curncy`  | **hedge** — pay fixed |
+| 15Y   | `KWSW15 Curncy`  | — (past maturity) |
+| 20Y   | `KWSW20 Curncy`  | — |
+
+Reference curve: `YCSW0074 Index` (KRW IRS). CD fixing history: `KWCDC Curncy`.
+
+### BDP pulls (Excel add-in) — bid, ask, spread in bp
+
+```excel
+=BDP("KWSW7 Curncy","PX_BID")
+=BDP("KWSW7 Curncy","PX_ASK")
+=(BDP("KWSW7 Curncy","PX_ASK")-BDP("KWSW7 Curncy","PX_BID"))*100      ' spread, bp
+```
+
+Average spread over the last month (proves it isn't a one-off wide quote):
+
+```excel
+=AVERAGE(BDH("KWSW7 Curncy","PX_ASK",TODAY()-30,TODAY()))
+   -AVERAGE(BDH("KWSW7 Curncy","PX_BID",TODAY()-30,TODAY()))
+```
+
+### Cost to execute a hedge (cross half the bid/offer, valued through the annuity)
+
+    Cost_KRW = Notional × Annuity(T) × (spread_bp / 2) × 0.0001
+
+```excel
+' 7Y example: ~22bn notional, annuity 6.073 from the Bootstrap sheet
+=22e9 * 6.073 * (BDP("KWSW7 Curncy","PX_ASK")-BDP("KWSW7 Curncy","PX_BID"))/2/100
+```
+
+### Decision rule
+
+> **Hedge a bucket only if:  risk removed (KRW/bp)  >  ½ × bid-offer(bp) × notional × annuity.**
+
+- **2Y / 3Y / 5Y / 10Y** — tens of mm/bp of risk vs low-single-digit-mm crossing cost → **trade.**
+- **7Y split** — ~13mm to cross vs a rounding-level 7s10s residual → **skip.**
+- **3M / 6M / 9M dust** — whole block ≈ 10k/bp; one tick of bid/offer ≈ 5,000× that → **skip.**
